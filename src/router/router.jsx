@@ -6,6 +6,7 @@ import Login from "../pages/Login";
 
 import Register from "../pages/Register";
 import { Dashboard } from "../layouts/Dashboard";
+import Team from "../pages/Team";
 
 const router = createBrowserRouter([
 	{
@@ -26,7 +27,12 @@ const router = createBrowserRouter([
 	{
 		path: "/dashboard",
 		element: <Dashboard></Dashboard>,
-		children: [{}],
+		children: [
+			{
+				path: "/dashboard/team",
+				element: <Team></Team>,
+			},
+		],
 	},
 ]);
 export default router;
