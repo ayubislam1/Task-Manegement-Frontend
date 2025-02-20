@@ -1,4 +1,11 @@
-import {  Home, ClipboardCheck, ClipboardList, Settings,List,CircleCheckBig } from "lucide-react";
+import {
+	Home,
+	ClipboardCheck,
+	ClipboardList,
+	Users,
+	List,
+	CircleCheckBig,
+} from "lucide-react";
 
 import {
 	Sidebar,
@@ -13,7 +20,6 @@ import {
 import Navbar from "../components/ui/Navbar";
 import { Outlet } from "react-router";
 
-// Menu items.
 const items = [
 	{
 		title: "Dashboard",
@@ -22,34 +28,39 @@ const items = [
 	},
 	{
 		title: "Task",
-		url: "/task",
+		url: "/dashboard/task",
 		icon: List,
 	},
 	{
 		title: "Complete",
-		url: "/done",
+		url: "/dashboard/done",
 		icon: CircleCheckBig,
 	},
 	{
 		title: "In progress",
-		url: "/in-progress",
+		url: "/dashboard/in-progress",
 		icon: ClipboardList,
 	},
 	{
 		title: "To Do",
-		url: "/todo",
-		icon:ClipboardCheck,
+		url: "/dashboard/todo",
+		icon: ClipboardCheck,
+	},
+	{
+		title: "Team",
+		url: "/dashboard/team",
+		icon: Users,
 	},
 ];
 
 export function Dashboard() {
 	return (
 		<div className="flex w-full min-h-screen">
-			<div >
-				<Sidebar >
+			<div>
+				<Sidebar>
 					<SidebarContent>
 						<SidebarGroup>
-							<SidebarGroupLabel >Application</SidebarGroupLabel>
+							<SidebarGroupLabel>Application</SidebarGroupLabel>
 							<SidebarGroupContent>
 								<SidebarMenu className="mt-10">
 									{items.map((item) => (
@@ -70,8 +81,8 @@ export function Dashboard() {
 			</div>
 			<div className="flex-1">
 				<Navbar></Navbar>
-				<div className="border rounded-tl-lg min-h-screen">
-					<Outlet/>
+				<div className="border rounded-tl-lg min-h-screen p-5">
+					<Outlet />
 				</div>
 			</div>
 		</div>

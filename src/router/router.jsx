@@ -7,6 +7,8 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import { Dashboard } from "../layouts/Dashboard";
 import Team from "../pages/Team";
+import { SidebarProvider } from "../components/ui/sidebar";
+import Task from "../pages/Task";
 
 const router = createBrowserRouter([
 	{
@@ -26,8 +28,12 @@ const router = createBrowserRouter([
 	},
 	{
 		path: "/dashboard",
-		element: <Dashboard></Dashboard>,
+		element: <SidebarProvider><Dashboard></Dashboard></SidebarProvider>,
 		children: [
+            {
+                path:"/dashboard/task",
+                element:<Task></Task>
+            },
 			{
 				path: "/dashboard/team",
 				element: <Team></Team>,

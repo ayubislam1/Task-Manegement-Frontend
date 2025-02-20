@@ -1,10 +1,11 @@
 import React from 'react';
-import Team from './Team';
+import {Button} from "@/components/ui/button"
 
 const DashboardHome = () => {
     return (
-        <div>
-            <Team></Team>
+        <div className='flex items-center'>
+            <h1 className='text-xl font-bold'>Task</h1>
+            <Button className="bg-blue-600">+Create Task</Button>
         </div>
     );
 };

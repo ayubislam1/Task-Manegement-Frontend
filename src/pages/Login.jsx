@@ -12,6 +12,7 @@ import {Button} from "@/components/ui/button"
 import { Link, useNavigate } from "react-router";
 import useAuth from "../hooks/useAuth";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import useAxiosPublic from "../hooks/useAxiosPublic";
 
 
 
@@ -21,6 +22,7 @@ const Login = () => {
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
+    const axiosPublic=useAxiosPublic()
     const handleSubmit = (e) => {
 		e.preventDefault();
 		setLoading(true);
@@ -30,7 +32,7 @@ const Login = () => {
 		SignIn(email, pass)
 			.then((res) => {
 				setLoading(false);
-				navigate("/");
+				navigate("/dashboard");
 			})
 			.catch(() => {
 				setLoading(false);
@@ -38,20 +40,23 @@ const Login = () => {
 				console.log(error);
 			});
 	};
-	const handleClick = () => {
+
+    const handleClick = () => {
 		setLoading(true);
 		googleProvider()
-			.then(() => {
-				navigate("/");
-				setLoading(false);
-			})
-			.catch((error) => {
-				setLoading(false);
-				setError("Google Sign-In failed. Please try again.");
-				console.log(error);
-			});
-	};
+        .then((result) => {
+			const userInfo = {
+				email: result.user.email,
+				name: result.user.displayName,
+                status:"Active",
+			};
 
+			axiosPublic.post("/all-users", userInfo).then((res) => {
+				console.log(res.data);
+				navigate("/dashboard");
+			});
+		});
+	};
 	return (
 		<Card className="mx-auto max-w-2xl md:max-w-4xl lg:max-w-6xl my-5 flex flex-col-reverse md:flex-row justify-center items-center border-none gap-4 p-4">
 			<div className="w-full md:w-1/2 space-y-6">
@@ -72,8 +77,10 @@ const Login = () => {
 								type="email"
 								placeholder="m@example.com"
 								name="email"
-								requiblue
+								requiblue={true}
 								className="w-full"
+                                required
+                              
 							/>
 						</div>
 						<div className="space-y-2 relative">
@@ -84,8 +91,9 @@ const Login = () => {
 									placeholder="password"
 									type={showPassword ? "text" : "password"}
 									name="pass"
-									requiblue
+									requiblue={true}
 									className="w-full"
+                                    required
 								/>
 
 								<span

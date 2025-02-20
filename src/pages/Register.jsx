@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-
 import {
 	Card,
 	CardHeader,
@@ -19,11 +18,8 @@ import useAxiosPublic from "../hooks/useAxiosPublic";
 import Swal from "sweetalert2";
 import useAuth from "../hooks/useAuth";
 
-
-
-
 export default function Register() {
-	const { CreateUser, updateName,googleProvider } = useAuth();
+	const { CreateUser, updateName, googleProvider } = useAuth();
 	const [loading, setLoading] = useState(false);
 	const [errormessage, setErrormessage] = useState("");
 	const [errmessage, setErrmessage] = useState("");
@@ -34,9 +30,8 @@ export default function Register() {
 
 	const image_host_key = import.meta.env.VITE_Image;
 	const image_host_Api = `https://api.imgbb.com/1/upload?key=${image_host_key}`;
-	
 
-    const handleSubmit = async (e) => {
+	const handleSubmit = async (e) => {
 		e.preventDefault();
 
 		const form = e.target;
@@ -45,11 +40,10 @@ export default function Register() {
 		const email = form.email.value.trim();
 		const pass = form.pass.value.trim();
 		const confirmPass = form.confirmPass.value.trim();
-
+		const role = form.role.value.trim();
 
 		setErrormessage("");
 
-		
 		if (pass !== confirmPass) {
 			setErrormessage("Passwords do not match.");
 			return;
@@ -65,7 +59,6 @@ export default function Register() {
 		}
 
 		try {
-		
 			const formData = new FormData();
 			formData.append("image", photoUrl[0]);
 
@@ -80,22 +73,17 @@ export default function Register() {
 				name,
 				photoUrl: imageUrl,
 				email,
-				
 				status: "Active",
-                role,
+				role,
 			};
 
-			
-
-			
 			const userResult = await CreateUser(email, pass);
 			console.log("Firebase user created:", userResult.user);
 
 			await updateName(name, imageUrl);
 			console.log("User profile updated successfully.");
 
-		
-			const response = await axiosSecure.post("/all-users", newUser);
+			const response = await axiosPublic.post("/all-users", newUser);
 
 			if (response.data.insertedId) {
 				Swal.fire({
@@ -106,38 +94,34 @@ export default function Register() {
 					timer: 1500,
 				});
 
-			
-				navigate("/");
+				navigate("/dashboard");
 				form.reset();
 			} else {
-				console.log(
-					"Failed to save user to the database. Please try again."
-				);
+				console.log("Failed to save user to the database. Please try again.");
 			}
 		} catch (error) {
-			
 			console.error("An error occurred:", error.response || error.message);
-
 		}
 	};
-    const handleClick = () => {
+	const handleClick = () => {
 		setLoading(true);
-		googleProvider()
-			.then(() => {
-				setLoading(false);
-				navigate("/");
-			})
-			.catch(() => {
-				setLoading(false);
-				setError("Google Sign-In failed. Please try again.");
-				console.log(error);
-			});
-	};
+		googleProvider().then((result) => {
+			const userInfo = {
+				email: result.user.email,
+				name: result.user.displayName,
+				status: "Active",
+			};
 
+			axiosPublic.post("/all-users", userInfo).then((res) => {
+				console.log(res.data);
+				navigate("/dashboard");
+			});
+		});
+	};
 
 	return (
 		<Card className="max-w-7xl mx-auto my-5 flex flex-col lg:flex-row items-center border-none shadow-md">
-            	<div className="max-w-full w-full md:w-1/2 object-contain p-5 ">
+			<div className="max-w-full w-full md:w-1/2 object-contain p-5 ">
 				{/* <Lottie animationData={registerAnimation}></Lottie> */}
 			</div>
 			<div className="flex-1 p-5">
@@ -157,7 +141,8 @@ export default function Register() {
 								id="full-name"
 								placeholder="John Doe"
 								name="name"
-								requiblue
+								requiblue={true}
+								required
 							/>
 						</div>
 						<div className="space-y-2">
@@ -167,7 +152,8 @@ export default function Register() {
 								type="File"
 								placeholder="Photo URL"
 								name="photoUrl"
-								requiblue
+								requiblue={true}
+								required
 							/>
 						</div>
 						<div className="space-y-2">
@@ -177,18 +163,19 @@ export default function Register() {
 								type="email"
 								placeholder="me@example.com"
 								name="email"
-								requiblue
+								requiblue={true}
+								required
 							/>
 						</div>
-						
-				
-                        <div className="space-y-2">
+
+						<div className="space-y-2">
 							<Label htmlFor="role">Role</Label>
 							<select
 								id="role"
 								name="role"
 								className="block w-full border-gray-300 rounded-md"
-								requiblue
+								requiblue={true}
+								required
 							>
 								<option value="">Select Role</option>
 								<option value="Designer">Designer</option>
@@ -196,7 +183,7 @@ export default function Register() {
 								<option value="Manager">Manager</option>
 							</select>
 						</div>
-					
+
 						<div className="space-y-2">
 							<Label htmlFor="password">Password</Label>
 							<div className="relative">
@@ -205,7 +192,8 @@ export default function Register() {
 									placeholder="Password"
 									type={showPassword ? "text" : "password"}
 									name="pass"
-									requiblue
+									requiblue={true}
+									required
 								/>
 								<span
 									onClick={() => setShowPassword(!showPassword)}
@@ -228,7 +216,8 @@ export default function Register() {
 									id="confirm-password"
 									type={showConfirmPassword ? "text" : "password"}
 									name="confirmPass"
-									requiblue
+									requiblue={true}
+									required
 								/>
 								<span
 									onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -243,7 +232,7 @@ export default function Register() {
 							</div>
 							<p className="text-blue-500 text-xs md:text-sm">{errmessage}</p>
 						</div>
-                    
+
 						<div className="flex items-center space-x-2">
 							<Checkbox />
 							<p className="text-xs md:text-sm">
@@ -254,15 +243,14 @@ export default function Register() {
 						<Button className="w-full dark:text-white bg-blue-500 hover:bg-blue-500">
 							{loading ? "Loading.." : "Sign up"}
 						</Button>
-    <div className=" text-black">
-                                                    <Button
-                                                        className="w-full  bg-transparent text-white bg-blue-500 hover:bg-blue-500  dark:text-white dark:bg-primary hover:text-white border"
-                                                        onClick={handleClick}
-                                                    >
-                                                        Google
-                                                    </Button>
-                                                    
-                                                </div>
+						<div className=" text-black">
+							<Button
+								className="w-full  bg-transparent text-white bg-blue-500 hover:bg-blue-500  dark:text-white dark:bg-primary hover:text-white border"
+								onClick={handleClick}
+							>
+								Google
+							</Button>
+						</div>
 						<p className="text-center text-sm md:text-base">
 							Already have an account?
 							<Link to="/login" className="underline font-semibold ">
@@ -273,7 +261,6 @@ export default function Register() {
 					</form>
 				</CardContent>
 			</div>
-		
 		</Card>
 	);
 }
