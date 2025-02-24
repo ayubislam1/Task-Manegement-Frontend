@@ -7,23 +7,21 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"
-import {Button} from "@/components/ui/button"
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router";
 import useAuth from "../hooks/useAuth";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import useAxiosPublic from "../hooks/useAxiosPublic";
 
-
-
 const Login = () => {
 	const navigate = useNavigate();
-	const { SignIn,googleProvider } = useAuth();
+	const { SignIn, googleProvider } = useAuth();
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
-    const axiosPublic=useAxiosPublic()
-    const handleSubmit = (e) => {
+	const axiosPublic = useAxiosPublic();
+	const handleSubmit = (e) => {
 		e.preventDefault();
 		setLoading(true);
 		const email = e.target.email.value;
@@ -41,14 +39,14 @@ const Login = () => {
 			});
 	};
 
-    const handleClick = () => {
+	const handleClick = () => {
 		setLoading(true);
-		googleProvider()
-        .then((result) => {
+		googleProvider().then((result) => {
 			const userInfo = {
 				email: result.user.email,
 				name: result.user.displayName,
-                status:"Active",
+				status: "Active",
+				photoURL: result.user.photoURL,
 			};
 
 			axiosPublic.post("/all-users", userInfo).then((res) => {
@@ -79,8 +77,7 @@ const Login = () => {
 								name="email"
 								requiblue={true}
 								className="w-full"
-                                required
-                              
+								required
 							/>
 						</div>
 						<div className="space-y-2 relative">
@@ -93,7 +90,7 @@ const Login = () => {
 									name="pass"
 									requiblue={true}
 									className="w-full"
-                                    required
+									required
 								/>
 
 								<span
@@ -119,14 +116,13 @@ const Login = () => {
 						>
 							{loading ? "Loading..." : "Sign in"}
 						</Button>
-                        <div className=" text-black">
+						<div className=" text-black">
 							<Button
 								className="w-full  bg-transparent text-white bg-blue-500 hover:bg-blue-500  dark:text-white dark:bg-primary hover:text-white border"
 								onClick={handleClick}
 							>
 								Google
 							</Button>
-							
 						</div>
 						<p className="text-center">
 							Don&apos;t have an account?{" "}

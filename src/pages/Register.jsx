@@ -36,7 +36,7 @@ export default function Register() {
 
 		const form = e.target;
 		const name = form.name.value.trim();
-		const photoUrl = form.photoUrl.files;
+		const photoURL = form.photoURL.files;
 		const email = form.email.value.trim();
 		const pass = form.pass.value.trim();
 		const confirmPass = form.confirmPass.value.trim();
@@ -60,7 +60,7 @@ export default function Register() {
 
 		try {
 			const formData = new FormData();
-			formData.append("image", photoUrl[0]);
+			formData.append("image", photoURL[0]);
 
 			const res = await axiosPublic.post(image_host_Api, formData);
 
@@ -71,7 +71,7 @@ export default function Register() {
 			const imageUrl = res.data.data.display_url;
 			const newUser = {
 				name,
-				photoUrl: imageUrl,
+				photoURL: imageUrl,
 				email,
 				status: "Active",
 				role,
@@ -151,7 +151,7 @@ export default function Register() {
 								id="Photo-url"
 								type="File"
 								placeholder="Photo URL"
-								name="photoUrl"
+								name="photoURL"
 								requiblue={true}
 								required
 							/>

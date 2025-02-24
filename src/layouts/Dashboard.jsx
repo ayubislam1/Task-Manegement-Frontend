@@ -18,7 +18,7 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Navbar from "../components/ui/Navbar";
-import { Outlet } from "react-router";
+import { Link, Outlet } from "react-router";
 
 const items = [
 	{
@@ -66,10 +66,10 @@ export function Dashboard() {
 									{items.map((item) => (
 										<SidebarMenuItem key={item.title}>
 											<SidebarMenuButton asChild>
-												<a href={item.url}>
+												<Link to={item.url}>
 													<item.icon />
 													<span>{item.title}</span>
-												</a>
+												</Link>
 											</SidebarMenuButton>
 										</SidebarMenuItem>
 									))}
@@ -79,9 +79,9 @@ export function Dashboard() {
 					</SidebarContent>
 				</Sidebar>
 			</div>
-			<div className="flex-1">
+			<div className="flex-1 ">
 				<Navbar></Navbar>
-				<div className="border rounded-tl-lg min-h-screen p-5">
+				<div className=" bg-gray-50 border rounded-tl-lg  p-5  min-h-screen">
 					<Outlet />
 				</div>
 			</div>
