@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import useAuth from "../hooks/useAuth";
 import useAxiosPublic from "../hooks/useAxiosPublic";
 import TaskManage from "./TaskManage";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Task = () => {
 	const axiosPublic = useAxiosPublic();
@@ -32,7 +33,8 @@ const Task = () => {
 	const [image, setImage] = useState(null);
 	const [users, setUsers] = useState([]);
 	const [selectedUser, setSelectedUser] = useState([]);
-
+	
+	const queryClient = useQueryClient();
 	const [task, setTask] = useState({
 		id: taskId,
 		title: "",
@@ -97,25 +99,28 @@ const Task = () => {
 
 	const handleSubmit = async () => {
 		if (!task.title.trim()) {
-			alert("Title is required!");
+			toast("Title is required!");
 			return;
 		}
-
+	
 		setLoading(true);
-
+	
 		let imageUrl = "";
 		if (image) {
 			const formData = new FormData();
 			formData.append("image", image);
-
+	
 			try {
-				const imgResponse = await fetch(image_host_Api, {
-					method: "POST",
-					body: formData,
+				const { data } = await axiosPublic.post(image_host_Api, formData, {
+					headers: { "Content-Type": "multipart/form-data" },
 				});
-				const imgData = await imgResponse.json();
-				if (imgData.success) {
-					imageUrl = imgData.data.url;
+	
+				if (data.success) {
+					imageUrl = data.data.url;
+				} else {
+					toast("Image upload failed!");
+					setLoading(false);
+					return;
 				}
 			} catch (error) {
 				console.error("Error uploading image:", error);
@@ -124,9 +129,9 @@ const Task = () => {
 				return;
 			}
 		}
-
+	
 		const newTaskId = Date.now();
-
+	
 		const newTask = {
 			...task,
 			id: newTaskId,
@@ -137,12 +142,12 @@ const Task = () => {
 			email: user?.email,
 			photoURL: user?.photoURL,
 		};
-
+	
 		try {
 			const response = await axiosPublic.post("/tasks", newTask);
 			console.log("Task Created:", response.data);
 			toast("Task created successfully!");
-
+			queryClient.invalidateQueries(["tasks"]);
 			setTaskId(newTaskId);
 			setOpen(false);
 			setTask({
@@ -160,9 +165,10 @@ const Task = () => {
 			console.error("Error creating task:", error);
 			toast("Failed to create task!");
 		}
-
+	
 		setLoading(false);
 	};
+	
 
 	return (
 		<>

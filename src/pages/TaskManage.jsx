@@ -65,7 +65,7 @@ const TaskManage = () => {
 					<SortableContext strategy={rectSwappingStrategy} items={data}>
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 justify-between  ">
 							{data.map((e) => (
-								<TaskBox key={e._id} {...e} onDelete={(id) => setData(tasks.filter(t => t._id !== id))}></TaskBox>
+								<TaskBox key={e._id} {...e} onDelete={(id) => setData(tasks.filter(t => t._id !== id))} ></TaskBox>
 							))}
 						</div>
 					</SortableContext>
