@@ -20,6 +20,7 @@ import {
 import Navbar from "../components/ui/Navbar";
 import { Link, Outlet } from "react-router";
 import { ToastContainer } from "react-toastify";
+import DashboardHome from "../pages/DashboardHome";
 
 const items = [
 	{
@@ -61,7 +62,9 @@ export function Dashboard() {
 				<Sidebar>
 					<SidebarContent>
 						<SidebarGroup>
-							<SidebarGroupLabel>Application</SidebarGroupLabel>
+							<SidebarGroupLabel className="text-xl text-blue-500">
+								Task-Me
+							</SidebarGroupLabel>
 							<SidebarGroupContent>
 								<SidebarMenu className="mt-10">
 									{items.map((item) => (
@@ -82,6 +85,7 @@ export function Dashboard() {
 			</div>
 			<div className="flex-1 ">
 				<Navbar></Navbar>
+
 				<div className=" bg-gray-50 border rounded-tl-lg  p-5  min-h-screen">
 					<Outlet />
 				</div>

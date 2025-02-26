@@ -100,7 +100,7 @@ export default function Navbar() {
 								<div className="rounded-full hidden sm:inline-block w-2/3">
 									<Input placeholder="  Search" />
 								</div>
-								<p>{userData?.name}</p>
+								
 								{/* Right section */}
 								<div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
 									{/* Notifications */}
@@ -131,14 +131,14 @@ export default function Navbar() {
 													Your Profile
 												</Link>
 											</MenuItem>
-											<MenuItem>
+											{/* <MenuItem>
 												<a
 													href="#"
 													className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
 												>
 													Settings
 												</a>
-											</MenuItem>
+											</MenuItem> */}
 											<MenuItem>
 												{user ? (
 													<a
@@ -187,7 +187,7 @@ export default function Navbar() {
 
 			{/* Profile Modal */}
 			{isModalOpen && (
-				<div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+				<div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-[999]">
 					<div className="bg-white p-6 rounded-lg shadow-lg w-96">
 						<h2 className="text-lg font-semibold mb-4">Edit Profile</h2>
 						<form onSubmit={(e) => e.preventDefault()}>

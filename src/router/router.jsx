@@ -15,6 +15,7 @@ import TaskDetails from "../pages/TaskDetails";
 import Todo from "../pages/Todo";
 import InProgress from "../pages/InProgress";
 import Complete from "../pages/Complete";
+import DashboardHome from "../pages/DashboardHome";
 
 const router = createBrowserRouter([
 	{
@@ -42,6 +43,10 @@ const router = createBrowserRouter([
 		loader: async () => await fetch(`http://localhost:3000/all-users`),
 
 		children: [
+			{
+				path: "/dashboard",
+				element: <DashboardHome></DashboardHome>,
+			},
 			{
 				path: "/dashboard/task",
 				element: <Task></Task>,
