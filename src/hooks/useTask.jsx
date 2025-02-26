@@ -11,7 +11,7 @@ const useTask = () => {
 		queryKey: ["tasks"],
 		queryFn: async () => {
 			const res = await axiosPublic.get(`/tasks`);
-			
+
 			return res.data;
 		},
 	});

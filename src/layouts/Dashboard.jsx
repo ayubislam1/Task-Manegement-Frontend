@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import Navbar from "../components/ui/Navbar";
 import { Link, Outlet } from "react-router";
+import { ToastContainer } from "react-toastify";
 
 const items = [
 	{
@@ -85,6 +86,7 @@ export function Dashboard() {
 					<Outlet />
 				</div>
 			</div>
+			<ToastContainer></ToastContainer>
 		</div>
 	);
 }

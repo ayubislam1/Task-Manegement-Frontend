@@ -3,7 +3,9 @@ import React from "react";
 import { CSS } from "@dnd-kit/utilities";
 import TaskCard from "../components/ui/TaskCard";
 
-const TaskBox = ({ id, setTasks , onDelete, ...task}) => {
+const TaskBox = ({ id, setTasks ,onEdit, onDelete, ...task}) => {
+
+	
 	const { attributes, listeners, setNodeRef, transform, transition, active } =
 		useSortable({ id: id });
 	const style = {
@@ -21,7 +23,7 @@ const TaskBox = ({ id, setTasks , onDelete, ...task}) => {
 			className=" mt-5 "
 		>
 			<div style={{ touchAction: "none" }}>
-				<TaskCard task={task} onDelete={onDelete}></TaskCard>
+				<TaskCard task={task} onDelete={onDelete} onEdit={onEdit}></TaskCard>
 			</div>
 		</div>
 	);

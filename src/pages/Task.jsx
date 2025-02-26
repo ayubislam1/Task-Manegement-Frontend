@@ -33,7 +33,7 @@ const Task = () => {
 	const [image, setImage] = useState(null);
 	const [users, setUsers] = useState([]);
 	const [selectedUser, setSelectedUser] = useState([]);
-	
+	const [showEditModal, setShowEditModal] = useState(false);
 	const queryClient = useQueryClient();
 	const [task, setTask] = useState({
 		id: taskId,

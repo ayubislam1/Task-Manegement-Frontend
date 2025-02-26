@@ -12,6 +12,9 @@ import Task from "../pages/Task";
 import Navbar from "../components/ui/Navbar";
 import Modal from "../components/ui/Modal";
 import TaskDetails from "../pages/TaskDetails";
+import Todo from "../pages/Todo";
+import InProgress from "../pages/InProgress";
+import Complete from "../pages/Complete";
 
 const router = createBrowserRouter([
 	{
@@ -50,6 +53,19 @@ const router = createBrowserRouter([
 			{
 				path: "/dashboard/team",
 				element: <Team></Team>,
+			},
+			{
+				path: "/dashboard/todo",
+				element: <Todo></Todo>,
+			},
+			{
+				path: "/dashboard/in-progress",
+				element: <InProgress></InProgress>,
+			},
+
+			{
+				path: "/dashboard/done",
+				element: <Complete></Complete>,
 			},
 		],
 	},
