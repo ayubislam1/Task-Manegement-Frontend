@@ -1,249 +1,79 @@
-import { useState } from "react";
-import {
-	Disclosure,
-	DisclosureButton,
-	DisclosurePanel,
-	Menu,
-	MenuButton,
-	MenuItem,
-	MenuItems,
-} from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { Input } from "@/components/ui/input";
-import useAuth from "../../hooks/useAuth";
-import { Link, useLoaderData } from "react-router";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import useAxiosPublic from "../../hooks/useAxiosPublic"; // Import axiosPublic
+import React, { useState } from "react";
+import { Menu, Bell } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import ThemeToggle from "./mode-toggle";
 
-
-
-const navigation = [
-	{ name: "Dashboard", href: "/dashboard", current: true },
-	{ name: "Task", href: "/dashboard/task", current: false },
-	{ name: "Complete", href: "/dashboard/done", current: false },
-	{ name: "In progress", href: "/dashboard/in-progress", current: false },
-	{ name: "To Do", href: "/dashboard/todo", current: false },
-	{ name: "Team", href: "/dashboard/team", current: false },
-];
-
-function classNames(...classes) {
-	return classes.filter(Boolean).join(" ");
-}
-
-export default function Navbar() {
-	const users = useLoaderData();
-	console.log(users);
-	const { logOut, user } = useAuth();
-	const userData = users.find((item) => item.email === user?.email);
-
-	console.log(userData);
-	const axiosPublic = useAxiosPublic();
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [name, setName] = useState(userData?.name);
-	const [email, setEmail] = useState(userData?.email);
-	const [photo, setPhoto] = useState(userData?.photoURL);
-	const [data, setData] = useState();
-
-	const handleEvent = () => {
-		logOut()
-			.then(() => {
-				console.log("Signout successful");
-			})
-			.catch((error) => {
-				console.log(error);
-			});
-	};
-
-	const handleSave = async (id) => {
-		const updatedUser = { name, email, photo };
-
-		try {
-			const response = await axiosPublic.patch(
-				`/update-profile/${id}`,
-				updatedUser
-			);
-
-			if (response.status === 200) {
-				console.log("Profile updated successfully!");
-				setIsModalOpen(false);
-
-				// socket.on("profileUpdated", (updatedUser) => {
-				// 	setData(updatedUser);
-				// });
-			} else {
-				console.error("Failed to update profile");
-			}
-		} catch (error) {
-			console.error("Error updating profile:", error);
-		}
-	};
+const Navbar = ({ onMenuClick }) => {
+	const { user, logOut } = useAuth();
+	const [isOpen, setIsOpen] = useState(false);
 
 	return (
-		<>
-			<Disclosure as="nav" className="dark:bg-gray-800 w-full top-0 right-0">
-				{({ open }) => (
-					<>
-						<div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-							<div className="relative flex h-16 items-center justify-between">
-								{/* Mobile menu button */}
-								<div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
-									<DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 dark:text-gray-400 hover:bg-gray-700 hover:text-white focus:ring-2 focus:ring-white focus:outline-hidden focus:ring-inset">
-										{open ? (
-											<XMarkIcon className="size-6" aria-hidden="true" />
-										) : (
-											<Bars3Icon className="size-6" aria-hidden="true" />
-										)}
-									</DisclosureButton>
+		<header className="fixed top-0 left-0 right-0 z-30 bg-white/80 dark:bg-gray-950/90 border-b border-gray-200 dark:border-gray-800 backdrop-blur-md shadow-sm">
+			<div className="flex h-16 items-center px-4">
+				<button
+					className="mr-4 p-2 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 md:hidden rounded-full transition-colors"
+					onClick={onMenuClick}
+					aria-label="Toggle menu"
+				>
+					<Menu className="h-6 w-6" />
+				</button>
+
+				<div className="md:hidden font-bold tracking-wide text-indigo-700 dark:text-indigo-400">
+					TASK MASTER
+				</div>
+
+				<div className="flex-1 flex items-center justify-end space-x-4">
+					<div className="relative flex items-center">
+						<input
+							type="text"
+							placeholder="Search tasks..."
+							className="rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 w-40 md:w-64 transition-colors"
+						/>
+					</div>
+
+					<ThemeToggle />
+
+					<button
+						className="p-2 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 relative rounded-full transition-colors"
+						aria-label="Notifications"
+					>
+						<Bell className="h-5 w-5" />
+						<span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+					</button>
+
+					<div className="relative">
+						<button
+							onClick={() => setIsOpen(!isOpen)}
+							className="flex items-center focus:outline-none"
+						>
+							<div className="w-8 h-8 rounded-full bg-indigo-600 dark:bg-indigo-700 flex items-center justify-center text-white font-semibold shadow-md">
+								{user?.displayName?.[0] || "U"}
+							</div>
+						</button>
+
+						{isOpen && (
+							<div className="absolute right-0 mt-2 w-52 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-xl py-1 z-50 transition-all">
+								<div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+									<p className="text-sm font-semibold text-gray-900 dark:text-white">
+										{user?.displayName}
+									</p>
+									<p className="text-xs text-gray-500 dark:text-gray-400">
+										{user?.email}
+									</p>
 								</div>
-
-								{/* Desktop Search Input */}
-								<div className="rounded-full hidden sm:inline-block w-2/3">
-									<Input placeholder="  Search" />
-								</div>
-								
-								{/* Right section */}
-								<div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-									{/* Notifications */}
-									<button
-										type="button"
-										className="relative rounded-full dark:bg-gray-800 p-1 text-gray-400 dark:hover:text-white hover:text-gray-700 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden"
-									>
-										<BellIcon aria-hidden="true" className="size-6" />
-									</button>
-
-									{/* Profile dropdown */}
-									<Menu as="div" className="relative ml-3">
-										<MenuButton className="relative flex rounded-full bg-gray-800 text-sm focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden">
-											<Avatar>
-												<AvatarImage src={user?.photoURL} alt="user" />
-												<AvatarFallback className="bg-blue-600 text-white">
-													CN
-												</AvatarFallback>
-											</Avatar>
-										</MenuButton>
-										<MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 ring-1 shadow-lg ring-black/5 transition focus:outline-hidden">
-											<MenuItem>
-												<Link
-													href="#"
-													onClick={setIsModalOpen}
-													className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-												>
-													Your Profile
-												</Link>
-											</MenuItem>
-											{/* <MenuItem>
-												<a
-													href="#"
-													className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-												>
-													Settings
-												</a>
-											</MenuItem> */}
-											<MenuItem>
-												{user ? (
-													<a
-														href="#"
-														onClick={handleEvent}
-														className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-													>
-														Sign out
-													</a>
-												) : (
-													<Link
-														to={"/login"}
-														className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-													>
-														Sign in
-													</Link>
-												)}
-											</MenuItem>
-										</MenuItems>
-									</Menu>
-								</div>
-							</div>
-						</div>
-
-						{/* Mobile Navigation Menu */}
-						<DisclosurePanel className="sm:hidden">
-							<div className="px-2 pt-2 pb-3 space-y-1">
-								{navigation.map((item) => (
-									<a
-										key={item.name}
-										href={item.href}
-										className={`block px-3 py-2 rounded-md text-base font-medium ${
-											item.current
-												? "bg-gray-900 text-white"
-												: "text-gray-300 hover:bg-gray-700 hover:text-white"
-										}`}
-									>
-										{item.name}
-									</a>
-								))}
-							</div>
-						</DisclosurePanel>
-					</>
-				)}
-			</Disclosure>
-
-			{/* Profile Modal */}
-			{isModalOpen && (
-				<div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-[999]">
-					<div className="bg-white p-6 rounded-lg shadow-lg w-96">
-						<h2 className="text-lg font-semibold mb-4">Edit Profile</h2>
-						<form onSubmit={(e) => e.preventDefault()}>
-							<div className="mb-4">
-								<label className="block text-sm font-medium text-gray-700">
-									Name
-								</label>
-								<input
-									type="text"
-									value={name}
-									onChange={(e) => setName(e.target.value)}
-									className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-								/>
-							</div>
-							<div className="mb-4">
-								<label className="block text-sm font-medium text-gray-700">
-									Email
-								</label>
-								<input
-									type="email"
-									value={user?.email}
-									disabled
-									className="mt-1 block w-full p-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
-								/>
-							</div>
-							<div className="mb-4">
-								<label className="block text-sm font-medium text-gray-700">
-									Profile Picture
-								</label>
-								<input
-									type="text"
-									value={photo}
-									onChange={(e) => setPhoto(e.target.value)}
-									className="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-								/>
-							</div>
-							<div className="flex justify-end">
 								<button
-									type="button"
-									onClick={() => setIsModalOpen(false)}
-									className="mr-2 px-4 py-2 bg-gray-500 text-white rounded-md"
+									onClick={() => logOut()}
+									className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 dark:text-gray-400 dark:hover:bg-gray-800 rounded-b-lg transition-colors"
 								>
-									Cancel
-								</button>
-								<button
-									type="button"
-									onClick={() => handleSave(userData?._id)}
-									className="px-4 py-2 bg-blue-600 text-white rounded-md"
-								>
-									Save
+									Sign out
 								</button>
 							</div>
-						</form>
+						)}
 					</div>
 				</div>
-			)}
-		</>
+			</div>
+		</header>
 	);
-}
+};
+
+export default Navbar;

@@ -1,12 +1,30 @@
 import React from "react";
-import { Outlet } from "react-router";
+import { Outlet, useLocation, Navigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import Home from "../pages/Home";
 
-const MainLayOut = () => {
+const MainLayout = () => {
+	const { user } = useAuth();
+	const location = useLocation();
+
+	if (
+		user &&
+		(location.pathname === "/login" || location.pathname === "/register")
+	) {
+		return <Navigate to="/dashboard" replace />;
+	}
+
 	return (
-		<div className="">
-			<Outlet></Outlet>
-		</div>
+		<>
+			{location.pathname === "/" ? (
+				<Home />
+			) : (
+				<div className="min-h-screen bg-background">
+					<Outlet />
+				</div>
+			)}
+		</>
 	);
 };
 
-export default MainLayOut;
+export default MainLayout;

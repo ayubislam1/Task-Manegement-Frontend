@@ -10,68 +10,64 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Pencil, Trash } from "lucide-react";
-import useTask from "../hooks/useTask";
+import { useTask } from "../hooks/useTask";
 import useAxiosPublic from "../hooks/useAxiosPublic";
 import { toast, ToastContainer } from "react-toastify";
 import { format } from "date-fns";
-
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
 import { Textarea } from "@/components/ui/textarea";
 
 const Complete = () => {
-	const [tasks] = useTask();
-	const [data, setTasks] = useState(tasks);
-	const done = data.filter((task) => task.category === "Done");
-	const axiosPublic = useAxiosPublic();
+	const { tasks, isLoading, deleteTask, updateTask } = useTask();
 	const [showTooltip, setShowTooltip] = useState(null);
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [selectedTaskId, setSelectedTaskId] = useState(null);
-    const [formData, setFormData] = useState({
-		_id: "",
-		title: "",
-		description: "",
-		category: "Done",
-		priority: "Medium",
-		timestamp: format(new Date(), "yyyy-MM-dd"),
-	});
+	const [loadingTasks, setLoadingTasks] = useState({});
 
+	const done = tasks.filter((task) => task.category === "Done");
 
-    
-	const handleDelete = (id) => {
-		axiosPublic.delete(`/task-delete/${id}`).then((res) => {
-			if (res.data.deletedCount > 0) {
-				toast("Task deleted Successfully!");
-				setTasks((prevTasks) => prevTasks.filter((task) => task._id !== id));
-			}
-		});
-	};
-
-    const handleEditSubmit = async (e) => {
+	const handleDelete = async (e, id) => {
 		e.preventDefault();
+		e.stopPropagation();
+		if (!id || loadingTasks[id]) return;
+
+		setLoadingTasks((prev) => ({ ...prev, [id]: true }));
 		try {
-			const response = await axiosPublic.patch(
-				`/task-update/${formData._id}`,
-				formData
-			);
-			if (response.data.modifiedCount > 0) {
-				toast.success("Task updated successfully!");
-				
-				setTasks((prev) =>
-					prev.map((task) =>
-						task._id === formData._id ? { ...task, ...formData } : task
-					)
-				);
-				setShowEditModal(false);
+			const success = await deleteTask(id);
+			if (success) {
+				toast.success("Task deleted successfully!");
 			}
 		} catch (error) {
-			toast.error("Failed to update task");
-			console.error(error);
+			console.error("Delete error:", error);
+			toast.error(error.message || "Failed to delete task");
+		} finally {
+			setLoadingTasks((prev) => ({ ...prev, [id]: false }));
 		}
 	};
-	
-	const handleEdit = (id) => {
+
+	const handleEditSubmit = async (e) => {
+		e.preventDefault();
+		if (!selectedTaskId || loadingTasks[selectedTaskId]) return;
+
+		setLoadingTasks((prev) => ({ ...prev, [selectedTaskId]: true }));
+		try {
+			const success = await updateTask(selectedTaskId, formData);
+			if (success) {
+				setShowEditModal(false);
+				toast.success("Task updated successfully!");
+			}
+		} catch (error) {
+			console.error("Error updating task:", error);
+			toast.error(error.message || "Failed to update task");
+		} finally {
+			setLoadingTasks((prev) => ({ ...prev, [selectedTaskId]: false }));
+		}
+	};
+
+	const handleEdit = (e, id) => {
+		e.preventDefault();
+		e.stopPropagation();
 		const taskToEdit = done.find((task) => task._id === id);
 		if (taskToEdit) {
 			setFormData({
@@ -82,15 +78,25 @@ const Complete = () => {
 			setShowEditModal(true);
 		}
 	};
-    const handleInputChange = (e) => {
+
+	const handleInputChange = (e) => {
 		const { name, value } = e.target;
 		setFormData((prev) => ({
 			...prev,
 			[name]: value,
 		}));
 	};
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+			</div>
+		);
+	}
+
 	return (
-		<div className="p-5 ">
+		<div className=" ">
 			<h2 className="text-xl font-semibold mb-4 text-center">Complete Tasks</h2>
 			<Table className="rounded-t-lg shadow-md overflow-hidden z-10 ">
 				<TableHeader>
@@ -106,13 +112,15 @@ const Complete = () => {
 				<TableBody className="bg-white">
 					{done.length > 0 ? (
 						done.map((task) => (
-							<TableRow key={task.id}>
+							<TableRow key={task._id}>
 								<TableCell>{task.title}</TableCell>
 								<TableCell>{task.description}</TableCell>
 								<TableCell>{task.priority}</TableCell>
 								<TableCell>
 									<div className="flex -space-x-3">
-										{task.assignedTo && task.assignedTo.length > 0 ? (
+										{task.assignedTo &&
+										Array.isArray(task.assignedTo) &&
+										task.assignedTo.length > 0 ? (
 											task.assignedTo.map((user) => (
 												<div
 													key={user._id}
@@ -170,17 +178,32 @@ const Complete = () => {
 									<Button
 										size="sm"
 										variant="ghost"
-										onClick={() => handleEdit(task._id)}
-										className="bg-white border"
+										onClick={(e) => handleEdit(e, task._id)}
+										disabled={loadingTasks[task._id]}
+										className="bg-white border relative"
 									>
-										<Pencil className="w-4 h-4 text-green-400" />
+										{loadingTasks[task._id] ? (
+											<div className="absolute inset-0 flex items-center justify-center">
+												<div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+											</div>
+										) : (
+											<Pencil className="w-4 h-4 text-green-400" />
+										)}
 									</Button>
 									<Button
 										size="sm"
 										variant="destructive"
-										onClick={() => handleDelete(task._id)}
+										onClick={(e) => handleDelete(e, task._id)}
+										disabled={loadingTasks[task._id]}
+										className="relative"
 									>
-										<Trash className="w-4 h-4" />
+										{loadingTasks[task._id] ? (
+											<div className="absolute inset-0 flex items-center justify-center">
+												<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+											</div>
+										) : (
+											<Trash className="w-4 h-4" />
+										)}
 									</Button>
 								</TableCell>
 							</TableRow>
@@ -196,10 +219,7 @@ const Complete = () => {
 			</Table>
 
 			{showEditModal && (
-				<div
-					className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] "
-					
-				>
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] ">
 					<div className="bg-white p-6 rounded-lg w-full max-w-md">
 						<h3 className="text-lg font-semibold mb-4">Edit Task</h3>
 						<form onSubmit={handleEditSubmit}>
@@ -277,7 +297,20 @@ const Complete = () => {
 								>
 									Cancel
 								</Button>
-								<Button type="submit">Save Changes</Button>
+								<Button
+									type="submit"
+									disabled={loadingTasks[selectedTaskId]}
+									className="relative"
+								>
+									{loadingTasks[selectedTaskId] ? (
+										<>
+											<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+											Saving...
+										</>
+									) : (
+										"Save Changes"
+									)}
+								</Button>
 							</div>
 						</form>
 					</div>

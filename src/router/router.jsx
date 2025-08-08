@@ -1,78 +1,92 @@
 import React from "react";
 
-import { createBrowserRouter } from "react-router";
-import MainLayOut from "../layouts/MainLayOut";
+import { createBrowserRouter } from "react-router-dom";
+import MainLayout from "../layouts/MainLayOut";
+import ErrorPage from "../pages/ErrorPage";
 import Login from "../pages/Login";
-
 import Register from "../pages/Register";
-import { Dashboard } from "../layouts/Dashboard";
-import Team from "../pages/Team";
-import { SidebarProvider } from "../components/ui/sidebar";
-import Task from "../pages/Task";
-import Navbar from "../components/ui/Navbar";
-import Modal from "../components/ui/Modal";
 import TaskDetails from "../pages/TaskDetails";
 import Todo from "../pages/Todo";
 import InProgress from "../pages/InProgress";
 import Complete from "../pages/Complete";
-import DashboardHome from "../pages/DashboardHome";
+import Team from "../pages/Team";
+import TaskEdit from "../pages/TaskEdit";
+import PrivateRoute from "./PrivateRoute";
+import AppLayout from "../layouts/AppLayOut";
+import Dashboard from "../pages/DashBoard";
+import TaskBoard from "../pages/TaskBoard";
+import AcceptInvite from "../pages/AcceptInvite";
 
 const router = createBrowserRouter([
 	{
 		path: "/",
-		element: <MainLayOut></MainLayOut>,
-		errorElement: <h1>error</h1>,
+		element: <MainLayout />,
+		errorElement: <ErrorPage />,
 		children: [
 			{
 				path: "/login",
-				element: <Login></Login>,
+				element: <Login />,
 			},
 			{
 				path: "/register",
-				element: <Register></Register>,
+				element: <Register />,
 			},
 		],
 	},
 	{
+		path: "/accept-invite/:token",
+		element: (
+			<PrivateRoute>
+				<AcceptInvite />
+			</PrivateRoute>
+		),
+	},
+	{
 		path: "/dashboard",
 		element: (
-			<SidebarProvider>
-				<Dashboard></Dashboard>
-			</SidebarProvider>
+			<PrivateRoute>
+				<AppLayout />
+			</PrivateRoute>
 		),
-		loader: async () => await fetch(`http://localhost:3000/all-users`),
-
 		children: [
 			{
-				path: "/dashboard",
-				element: <DashboardHome></DashboardHome>,
+				path: "",
+				element: <Dashboard></Dashboard>,
 			},
 			{
-				path: "/dashboard/task",
-				element: <Task></Task>,
+				path: "tasks",
+				element: <TaskBoard></TaskBoard>,
 			},
 			{
-				path: "/dashboard/task-details/:id",
+				path: "task-details/:id",
 				element: <TaskDetails></TaskDetails>,
 			},
 			{
-				path: "/dashboard/team",
-				element: <Team></Team>,
+				path: "task-edit/:id",
+				element: <TaskEdit></TaskEdit>,
 			},
 			{
-				path: "/dashboard/todo",
+				path: "taskboard/:id",
+				element: <TaskBoard></TaskBoard>,
+			},
+			{
+				path: "to-do",
 				element: <Todo></Todo>,
 			},
 			{
-				path: "/dashboard/in-progress",
+				path: "in-progress",
 				element: <InProgress></InProgress>,
 			},
-
 			{
-				path: "/dashboard/done",
+				path: "complete",
 				element: <Complete></Complete>,
+			},
+			{
+				path: "team",
+				element: <Team></Team>,
 			},
 		],
 	},
 ]);
+
 export default router;

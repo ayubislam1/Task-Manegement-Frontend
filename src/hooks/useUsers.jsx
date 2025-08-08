@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import useAxiosPublic from "./useAxiosPublic";
 import { useQuery } from "@tanstack/react-query";
-const useUsers = () => {
+
+export const useUsers = () => {
 	const axiosPublic = useAxiosPublic();
 
 	const {
@@ -14,10 +15,7 @@ const useUsers = () => {
 			const res = await axiosPublic.get(`/all-users`);
 			console.log(res.data);
 			return res.data;
-			
 		},
 	});
 	return [userData, isLoading, refetch];
 };
-
-export default useUsers;

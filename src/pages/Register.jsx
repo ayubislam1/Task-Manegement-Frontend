@@ -11,12 +11,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
 import useAxiosPublic from "../hooks/useAxiosPublic";
 import Swal from "sweetalert2";
-import useAuth from "../hooks/useAuth";
 
 export default function Register() {
 	const { CreateUser, updateName, googleProvider } = useAuth();

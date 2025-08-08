@@ -10,69 +10,67 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Pencil, Trash } from "lucide-react";
-import useTask from "../hooks/useTask";
+import { useTask } from "../hooks/useTask";
 import useAxiosPublic from "../hooks/useAxiosPublic";
 import { toast, ToastContainer } from "react-toastify";
 import { format } from "date-fns";
-
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-
 import { Textarea } from "@/components/ui/textarea";
-
+import MemberStatusIndicator from "../components/MemberStatusIndicator";
+import { useDashboard } from "../context/DashboardContext";
 
 const Todo = () => {
-	const [tasks] = useTask();
-	const [data, setTasks] = useState(tasks);
-	const todo = data.filter((task) => task.category === "To-Do");
-	const axiosPublic = useAxiosPublic();
+	const { tasks, isLoading, deleteTask, updateTask } = useTask();
+	const { onlineMembers } = useDashboard();
 	const [showTooltip, setShowTooltip] = useState(null);
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [selectedTaskId, setSelectedTaskId] = useState(null);
-    const [formData, setFormData] = useState({
-		_id: "",
-		title: "",
-		description: "",
-		category: "To-Do",
-		priority: "Medium",
-		timestamp: format(new Date(), "yyyy-MM-dd"),
-	});
+	const [loadingTasks, setLoadingTasks] = useState({}); // Track loading state per task
 
+	const todo = tasks.filter((task) => task.category === "To-Do");
 
-    
-	const handleDelete = (id) => {
-		axiosPublic.delete(`/task-delete/${id}`).then((res) => {
-			if (res.data.deletedCount > 0) {
-				toast("Task deleted Successfully!");
-				setTasks((prevTasks) => prevTasks.filter((task) => task._id !== id));
-			}
-		});
-	};
-
-    const handleEditSubmit = async (e) => {
+	const handleDelete = async (e, id) => {
 		e.preventDefault();
+		e.stopPropagation();
+		if (!id || loadingTasks[id]) return;
+
+		setLoadingTasks((prev) => ({ ...prev, [id]: true }));
 		try {
-			const response = await axiosPublic.patch(
-				`/task-update/${formData._id}`,
-				formData
-			);
-			if (response.data.modifiedCount > 0) {
-				toast.success("Task updated successfully!");
-				
-				setTasks((prev) =>
-					prev.map((task) =>
-						task._id === formData._id ? { ...task, ...formData } : task
-					)
-				);
-				setShowEditModal(false);
+			const success = await deleteTask(id);
+			if (success) {
+				toast.success("Task deleted successfully!");
 			}
 		} catch (error) {
-			toast.error("Failed to update task");
-			console.error(error);
+			console.error("Delete error:", error);
+			toast.error(error.message || "Failed to delete task");
+		} finally {
+			setLoadingTasks((prev) => ({ ...prev, [id]: false }));
 		}
 	};
-	
-	const handleEdit = (id) => {
+
+	const handleEditSubmit = async (e) => {
+		e.preventDefault();
+		if (!selectedTaskId || loadingTasks[selectedTaskId]) return;
+
+		setLoadingTasks((prev) => ({ ...prev, [selectedTaskId]: true }));
+		try {
+			const success = await updateTask(selectedTaskId, formData);
+			if (success) {
+				setShowEditModal(false);
+				toast.success("Task updated successfully!");
+			}
+		} catch (error) {
+			console.error("Error updating task:", error);
+			toast.error(error.message || "Failed to update task");
+		} finally {
+			setLoadingTasks((prev) => ({ ...prev, [selectedTaskId]: false }));
+		}
+	};
+
+	const handleEdit = (e, id) => {
+		e.preventDefault();
+		e.stopPropagation();
 		const taskToEdit = todo.find((task) => task._id === id);
 		if (taskToEdit) {
 			setFormData({
@@ -83,13 +81,23 @@ const Todo = () => {
 			setShowEditModal(true);
 		}
 	};
-    const handleInputChange = (e) => {
+
+	const handleInputChange = (e) => {
 		const { name, value } = e.target;
 		setFormData((prev) => ({
 			...prev,
 			[name]: value,
 		}));
 	};
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center h-[calc(100vh-4rem)]">
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="p-5 ">
 			<h2 className="text-xl font-semibold mb-4 text-center">To-Do Tasks</h2>
@@ -107,58 +115,22 @@ const Todo = () => {
 				<TableBody className="bg-white">
 					{todo.length > 0 ? (
 						todo.map((task) => (
-							<TableRow key={task.id}>
+							<TableRow key={task._id}>
 								<TableCell>{task.title}</TableCell>
 								<TableCell>{task.description}</TableCell>
 								<TableCell>{task.priority}</TableCell>
 								<TableCell>
 									<div className="flex -space-x-3">
-										{task.assignedTo && task.assignedTo.length > 0 ? (
+										{task.assignedTo &&
+										Array.isArray(task.assignedTo) &&
+										task.assignedTo.length > 0 ? (
 											task.assignedTo.map((user) => (
-												<div
+												<MemberStatusIndicator
 													key={user._id}
-													className="relative group cursor-pointer"
-													onMouseEnter={() =>
-														setShowTooltip(`${task._id}-${user._id}`)
-													}
-													onMouseLeave={() => setShowTooltip(null)}
-												>
-													<Avatar className="border-2 border-white">
-														<AvatarImage
-															src={user?.photoURL || ""}
-															alt={user?.name || "User"}
-														/>
-														<AvatarFallback>
-															{user?.name ? user.name[0] : "?"}
-														</AvatarFallback>
-													</Avatar>
-
-													{/* Tooltip */}
-													{showTooltip == `${task._id}-${user._id}` && (
-														<div className="absolute   w-56 left-1/2 transform -translate-x-1/2 mb-2 bg-white shadow-lg rounded-lg p-3 border border-gray-200 z-[9999]">
-															<div className="flex gap-2 items-center">
-																<Avatar className="border-white">
-																	<AvatarImage
-																		src={user?.photoURL || ""}
-																		alt={user?.name || "User"}
-																	/>
-																	<AvatarFallback>
-																		{user?.name ? user.name[0] : "?"}
-																	</AvatarFallback>
-																</Avatar>
-																<div>
-																	<p className="font-semibold text-gray-900">
-																		{user?.name || "Unknown User"}
-																	</p>
-																	<p className="text-base">{user?.role}</p>
-																	<p className="text-xs text-gray-500">
-																		{user?.email || "No email"}
-																	</p>
-																</div>
-															</div>
-														</div>
-													)}
-												</div>
+													member={user}
+													onlineMembers={onlineMembers}
+													size="sm"
+												/>
 											))
 										) : (
 											<span className="text-gray-500">Unassigned</span>
@@ -171,17 +143,32 @@ const Todo = () => {
 									<Button
 										size="sm"
 										variant="ghost"
-										onClick={() => handleEdit(task._id)}
-										className="bg-white border"
+										onClick={(e) => handleEdit(e, task._id)}
+										disabled={loadingTasks[task._id]}
+										className="bg-white border relative"
 									>
-										<Pencil className="w-4 h-4 text-green-400" />
+										{loadingTasks[task._id] ? (
+											<div className="absolute inset-0 flex items-center justify-center">
+												<div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+											</div>
+										) : (
+											<Pencil className="w-4 h-4 text-green-400" />
+										)}
 									</Button>
 									<Button
 										size="sm"
 										variant="destructive"
-										onClick={() => handleDelete(task._id)}
+										onClick={(e) => handleDelete(e, task._id)}
+										disabled={loadingTasks[task._id]}
+										className="relative"
 									>
-										<Trash className="w-4 h-4" />
+										{loadingTasks[task._id] ? (
+											<div className="absolute inset-0 flex items-center justify-center">
+												<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+											</div>
+										) : (
+											<Trash className="w-4 h-4" />
+										)}
 									</Button>
 								</TableCell>
 							</TableRow>
@@ -198,10 +185,17 @@ const Todo = () => {
 
 			{showEditModal && (
 				<div
-					className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] "
-					
+					className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]"
+					onClick={(e) => {
+						if (e.target === e.currentTarget) {
+							setShowEditModal(false);
+						}
+					}}
 				>
-					<div className="bg-white p-6 rounded-lg w-full max-w-md">
+					<div
+						className="bg-white p-6 rounded-lg w-full max-w-md"
+						onClick={(e) => e.stopPropagation()}
+					>
 						<h3 className="text-lg font-semibold mb-4">Edit Task</h3>
 						<form onSubmit={handleEditSubmit}>
 							<div className="space-y-4">

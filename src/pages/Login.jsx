@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { FcGoogle } from "react-icons/fc";
 import {
 	Card,
 	CardContent,
@@ -9,18 +11,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router";
-import useAuth from "../hooks/useAuth";
+import { Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { toast } from "react-toastify";
+
 import useAxiosPublic from "../hooks/useAxiosPublic";
 
 const Login = () => {
 	const navigate = useNavigate();
-	const { SignIn, googleProvider } = useAuth();
+	const location = useLocation();
+	const from = location.state?.from?.pathname || "/dashboard";
+	const { SignIn, googleProvider, googleSignIn } = useAuth();
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 	const axiosPublic = useAxiosPublic();
+
 	const handleSubmit = (e) => {
 		e.preventDefault();
 		setLoading(true);
@@ -39,105 +46,42 @@ const Login = () => {
 			});
 	};
 
-	const handleClick = () => {
-		setLoading(true);
-		googleProvider().then((result) => {
-			const userInfo = {
-				email: result.user.email,
-				name: result.user.displayName,
-				status: "Active",
-				photoURL: result.user.photoURL,
-			};
-
-			axiosPublic.post("/all-users", userInfo).then((res) => {
-				console.log(res.data);
-				navigate("/dashboard");
-			});
-		});
+	const handleGoogleSignIn = async () => {
+		try {
+			const result = await googleSignIn();
+			// Connect WebSocket after successful login
+		
+			toast.success("Successfully logged in!");
+			navigate(from, { replace: true });
+		} catch (error) {
+			toast.error(error.message);
+		}
 	};
+
 	return (
-		<Card className="mx-auto max-w-2xl md:max-w-4xl lg:max-w-6xl my-5 flex flex-col-reverse md:flex-row justify-center items-center border-none gap-4 p-4">
-			<div className="w-full md:w-1/2 space-y-6">
-				<CardHeader className="space-y-2 text-center md:text-left">
-					<CardTitle className="text-2xl md:text-4xl font-bold ">
-						Sign in
-					</CardTitle>
-					<CardDescription>
-						Enter your email and password to login to your account
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<form onSubmit={handleSubmit} className="space-y-6">
-						<div className="space-y-2">
-							<Label htmlFor="email">Email</Label>
-							<Input
-								id="email"
-								type="email"
-								placeholder="m@example.com"
-								name="email"
-								requiblue={true}
-								className="w-full"
-								required
-							/>
-						</div>
-						<div className="space-y-2 relative">
-							<Label htmlFor="password">Password</Label>
-							<div className="relative">
-								<Input
-									id="password"
-									placeholder="password"
-									type={showPassword ? "text" : "password"}
-									name="pass"
-									requiblue={true}
-									className="w-full"
-									required
-								/>
+		<div className="min-h-screen flex items-center justify-center bg-gray-50">
+			<div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-lg">
+				<div className="text-center">
+					<h2 className="mt-6 text-3xl font-bold text-gray-900">
+						Welcome Back
+					</h2>
+					<p className="mt-2 text-sm text-gray-600">
+						Sign in to access your task management dashboard
+					</p>
+				</div>
 
-								<span
-									onClick={() => setShowPassword(!showPassword)}
-									className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
-								>
-									{showPassword ? (
-										<EyeOffIcon className="w-5 h-5 text-gray-600" />
-									) : (
-										<EyeIcon className="w-5 h-5 text-gray-600" />
-									)}
-								</span>
-							</div>
-						</div>
-						<p className="text-blue-500">{error}</p>
-
-						<p className="underline flex justify-end text-sm md:text-base">
-							Forget password?
-						</p>
-						<Button
-							type="submit"
-							className="w-full dark:text-white bg-blue-500 hover:bg-blue-500"
-						>
-							{loading ? "Loading..." : "Sign in"}
-						</Button>
-						<div className=" text-black">
-							<Button
-								className="w-full  bg-transparent text-white bg-blue-500 hover:bg-blue-500  dark:text-white dark:bg-primary hover:text-white border"
-								onClick={handleClick}
-							>
-								Google
-							</Button>
-						</div>
-						<p className="text-center">
-							Don&apos;t have an account?{" "}
-							<Link to="/register" className="underline font-semibold ">
-								Sign up
-							</Link>
-						</p>
-					</form>
-				</CardContent>
+				<div className="mt-8 space-y-6">
+					<Button
+						onClick={handleGoogleSignIn}
+						variant="outline"
+						className="w-full flex items-center justify-center space-x-2 py-6 border-2 hover:bg-gray-50 transition-colors"
+					>
+						<FcGoogle className="w-6 h-6" />
+						<span>Continue with Google</span>
+					</Button>
+				</div>
 			</div>
-
-			<div className="w-full md:w-1/2 flex justify-center items-center">
-				{/* <Lottie animationData={logInAnimation}></Lottie> */}
-			</div>
-		</Card>
+		</div>
 	);
 };
 

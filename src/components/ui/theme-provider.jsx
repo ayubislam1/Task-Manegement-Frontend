@@ -1,67 +1,40 @@
-/* eslint-disable react/prop-types */
-import { createContext, useContext, useEffect, useState } from "react"
+// src/contexts/ThemeContext.jsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
+const ThemeContext = createContext();
 
+export const useTheme = () => useContext(ThemeContext);
 
-
-const initialState = {
-  theme: "system",
-  setTheme: () => null,
-}
- 
-
-
-const ThemeProviderContext = createContext(initialState)
-
-export function ThemeProvider({
-  children,
-  defaultTheme = "system",
-  storageKey = "vite-ui-theme",
-  ...props
-}) {
-  const [theme, setTheme] = useState(
-    () => (localStorage.getItem(storageKey)) || defaultTheme
-  )
-
-  useEffect(() => {
-    const root = window.document.documentElement
-
-    root.classList.remove("light", "dark")
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
-
-      root.classList.add(systemTheme)
-      return
+export const ThemeProvider = ({ children }) => {
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check local storage on initial load
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme !== null) {
+      return savedTheme === 'true';
     }
+    // Or use system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
-    root.classList.add(theme)
-  }, [theme])
+  // Toggle theme function
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+  };
 
-  const value = {
-    theme,
-    setTheme: (theme) => {
-      localStorage.setItem(storageKey, theme)
-      setTheme(theme)
-    },
-  }
+  // Update localStorage and body class when theme changes
+  useEffect(() => {
+    localStorage.setItem('darkMode', darkMode);
+    
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   return (
-    <ThemeProviderContext.Provider {...props} value={value}>
+    <ThemeContext.Provider value={{ darkMode, toggleTheme }}>
       {children}
-    </ThemeProviderContext.Provider>
-  )
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const useTheme = () => {
-  const context = useContext(ThemeProviderContext)
-
-  if (context === undefined)
-    throw new Error("useTheme must be used within a ThemeProvider")
-
-  return context
-}
+    </ThemeContext.Provider>
+  );
+};
