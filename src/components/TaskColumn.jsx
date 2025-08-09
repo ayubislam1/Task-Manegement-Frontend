@@ -23,7 +23,7 @@ const TaskColumn = ({
 	const { setNodeRef } = useDroppable({ id });
 
 	// Get all tasks from context to pass to individual Task components
-	const { tasks: allTasks, deleteTask, fetchTask } = useTaskContext();
+	const { tasks: allTasks } = useTaskContext();
 
 	// Filter tasks for this column - use the passed tasks directly and filter by category
 	const columnTasks = tasks || [];
@@ -67,17 +67,17 @@ const TaskColumn = ({
 
 	const handleDeleteTask = async (taskId) => {
 		try {
-			await deleteTask(taskId);
+			// Use the onDeleteTask prop instead of the context deleteTask
+			await onDeleteTask(taskId);
 		} catch (error) {
 			console.error(`Error deleting task ${taskId}:`, error);
 		}
 	};
 
-	const handleEditTask = async (taskId) => {
-		try {
-			await fetchTask(taskId);
-		} catch (error) {
-			console.error(`Error fetching task ${taskId} for edit:`, error);
+	const handleEditTask = (task) => {
+		// Pass the task object to the parent's edit handler
+		if (onEditTask) {
+			onEditTask(task);
 		}
 	};
 

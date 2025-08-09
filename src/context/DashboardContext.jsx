@@ -17,6 +17,16 @@ import {
 
 const DashboardContext = createContext();
 
+// Utility function to filter duplicate members based on email
+const filterUniqueMembers = (members) => {
+	return members.filter(
+		(member, index, arr) =>
+			arr.findIndex(
+				(m) => m.email.toLowerCase() === member.email.toLowerCase()
+			) === index
+	);
+};
+
 export const DashboardProvider = ({ children }) => {
 	const { user } = useAuth();
 	const axiosPublic = useAxiosPublic();
@@ -43,9 +53,14 @@ export const DashboardProvider = ({ children }) => {
 
 			// Set active dashboard if none is selected but dashboards exist
 			if (!activeDashboard && response.data.length > 0) {
-				setActiveDashboard(response.data[0]);
-				setMembers(response.data[0].members || []);
-				fetchDashboardTasks(response.data[0]._id);
+				const firstDashboard = response.data[0];
+
+				// Filter duplicate members before setting
+				const uniqueMembers = filterUniqueMembers(firstDashboard.members || []);
+
+				setActiveDashboard(firstDashboard);
+				setMembers(uniqueMembers);
+				fetchDashboardTasks(firstDashboard._id);
 			}
 		} catch (error) {
 			console.error("Error fetching dashboards:", error);
@@ -107,7 +122,10 @@ export const DashboardProvider = ({ children }) => {
 			};
 
 			const response = await axiosPublic.post("/dashboards", dashboardInfo);
-			setDashboards((prev) => [...prev, response.data]);
+
+			// Don't update local state here as socket event will handle it
+			// setDashboards((prev) => [...prev, response.data]);
+
 			setActiveDashboard(response.data);
 			toast.success("Dashboard created successfully");
 			return true;
@@ -133,6 +151,16 @@ export const DashboardProvider = ({ children }) => {
 			const dashboard = dashboards.find((d) => d._id === dashboardId);
 			if (!dashboard) {
 				throw new Error("Dashboard not found");
+			}
+
+			// Check if user is already a member of this dashboard
+			const isAlreadyMember = dashboard.members.some(
+				(member) => member.email.toLowerCase() === invitedEmail.toLowerCase()
+			);
+
+			if (isAlreadyMember) {
+				toast.error(`${invitedEmail} is already a member of this dashboard`);
+				return false;
 			}
 
 			const inviteData = {
@@ -204,8 +232,11 @@ export const DashboardProvider = ({ children }) => {
 	// Switch to a different dashboard
 	const switchDashboard = (dashboard) => {
 		if (dashboard && dashboard._id !== activeDashboard?._id) {
+			// Filter duplicate members before setting
+			const uniqueMembers = filterUniqueMembers(dashboard.members || []);
+
 			setActiveDashboard(dashboard);
-			setMembers(dashboard.members || []);
+			setMembers(uniqueMembers);
 			fetchDashboardTasks(dashboard._id);
 		}
 	};
@@ -284,11 +315,12 @@ export const DashboardProvider = ({ children }) => {
 			if (response.data) {
 				// Update local state immediately for better UX
 				setMembers((prev) =>
-					prev.map((member) =>
-						member._id === memberId || member.uid === memberId
-							? { ...member, role: newRole }
-							: member
-					)
+					prev.map((member) => {
+						if (member._id === memberId || member.uid === memberId) {
+							return { ...member, role: newRole };
+						}
+						return member;
+					})
 				);
 
 				// Update dashboards list with the updated member role
@@ -355,6 +387,17 @@ export const DashboardProvider = ({ children }) => {
 				return false;
 			}
 
+			// Prevent removing the last admin
+			if (memberToRemove.role === "Admin") {
+				const adminCount = members.filter((m) => m.role === "Admin").length;
+				if (adminCount <= 1) {
+					toast.error(
+						"Cannot remove the last admin. At least one admin must remain."
+					);
+					return false;
+				}
+			}
+
 			const response = await axiosPublic.delete(
 				`/dashboards/${dashboardId}/members/${memberToRemove.email}?email=${user.email}`
 			);
@@ -400,6 +443,71 @@ export const DashboardProvider = ({ children }) => {
 			console.error("Error removing member:", error);
 			const errorMessage =
 				error.response?.data?.message || "Failed to remove member";
+			toast.error(errorMessage);
+			return false;
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// Delete a dashboard (only admins can delete)
+	const deleteDashboard = async (dashboardId) => {
+		if (!user?.email || !dashboardId) {
+			toast.error("Cannot delete dashboard");
+			return false;
+		}
+
+		try {
+			setLoading(true);
+
+			// Find the dashboard to get its name for confirmation
+			const dashboard = dashboards.find((d) => d._id === dashboardId);
+			if (!dashboard) {
+				toast.error("Dashboard not found");
+				return false;
+			}
+
+			// Check if user is admin
+			const currentMember = dashboard.members.find(
+				(m) => m.email === user.email
+			);
+			if (!currentMember || currentMember.role !== "Admin") {
+				toast.error("Only admins can delete dashboards");
+				return false;
+			}
+
+			const response = await axiosPublic.delete(
+				`/dashboards/${dashboardId}?email=${user.email}`
+			);
+
+			if (response.data) {
+				// Update local state immediately
+				setDashboards((prev) => prev.filter((d) => d._id !== dashboardId));
+
+				// If the deleted dashboard was active, switch to first available or clear
+				if (activeDashboard && activeDashboard._id === dashboardId) {
+					const remainingDashboards = dashboards.filter(
+						(d) => d._id !== dashboardId
+					);
+					if (remainingDashboards.length > 0) {
+						setActiveDashboard(remainingDashboards[0]);
+						setMembers(remainingDashboards[0].members || []);
+						fetchDashboardTasks(remainingDashboards[0]._id);
+					} else {
+						setActiveDashboard(null);
+						setMembers([]);
+						setDashboardTasks([]);
+					}
+				}
+
+				toast.success(`Dashboard "${dashboard.name}" deleted successfully`);
+				return true;
+			}
+			return false;
+		} catch (error) {
+			console.error("Error deleting dashboard:", error);
+			const errorMessage =
+				error.response?.data?.message || "Failed to delete dashboard";
 			toast.error(errorMessage);
 			return false;
 		} finally {
@@ -473,10 +581,17 @@ export const DashboardProvider = ({ children }) => {
 			if (activeDashboard && data.dashboardId === activeDashboard._id) {
 				// Update members list if needed
 				setMembers((prev) => {
-					const memberExists = prev.some((m) => m.email === data.member.email);
+					const memberExists = prev.some(
+						(m) => m.email.toLowerCase() === data.member.email.toLowerCase()
+					);
 					if (!memberExists) {
 						// console.log("✅ Adding new member:", data.member.email);
-						return [...prev, data.member];
+						const newMembers = [...prev, data.member];
+
+						// Filter duplicates based on email
+						const uniqueMembers = filterUniqueMembers(newMembers);
+
+						return uniqueMembers;
 					}
 					return prev;
 				});
@@ -493,7 +608,14 @@ export const DashboardProvider = ({ children }) => {
 			);
 
 			if (isUserMember) {
-				setDashboards((prev) => [...prev, dashboard]);
+				// Check if dashboard already exists to prevent duplicates
+				setDashboards((prev) => {
+					const existingDashboard = prev.find((d) => d._id === dashboard._id);
+					if (existingDashboard) {
+						return prev; // Don't add if already exists
+					}
+					return [...prev, dashboard];
+				});
 			}
 		};
 
@@ -502,23 +624,34 @@ export const DashboardProvider = ({ children }) => {
 			// console.log("🔄 Member role updated event received:", data);
 			if (activeDashboard && data.dashboardId === activeDashboard._id) {
 				// console.log("✅ Updating member role in active dashboard");
-				// Update members list
+				// Update members list - using email as primary identifier since it's more reliable
 				setMembers((prev) =>
-					prev.map((member) =>
-						member._id === data.memberId || member.uid === data.memberId
-							? { ...member, role: data.role }
-							: member
-					)
+					prev.map((member) => {
+						if (
+							member.email === data.memberEmail ||
+							member._id === data.memberId ||
+							member.uid === data.memberId
+						) {
+							// console.log("🔄 Socket updating member:", member.email, "to role:", data.role);
+							return { ...member, role: data.role };
+						}
+						return member;
+					})
 				);
 
 				// Update active dashboard members
 				setActiveDashboard((prev) => ({
 					...prev,
-					members: prev.members.map((member) =>
-						member._id === data.memberId || member.uid === data.memberId
-							? { ...member, role: data.role }
-							: member
-					),
+					members: prev.members.map((member) => {
+						if (
+							member.email === data.memberEmail ||
+							member._id === data.memberId ||
+							member.uid === data.memberId
+						) {
+							return { ...member, role: data.role };
+						}
+						return member;
+					}),
 				}));
 
 				// Update dashboards list
@@ -527,11 +660,16 @@ export const DashboardProvider = ({ children }) => {
 						if (dashboard._id === data.dashboardId) {
 							return {
 								...dashboard,
-								members: dashboard.members.map((member) =>
-									member._id === data.memberId || member.uid === data.memberId
-										? { ...member, role: data.role }
-										: member
-								),
+								members: dashboard.members.map((member) => {
+									if (
+										member.email === data.memberEmail ||
+										member._id === data.memberId ||
+										member.uid === data.memberId
+									) {
+										return { ...member, role: data.role };
+									}
+									return member;
+								}),
 							};
 						}
 						return dashboard;
@@ -545,11 +683,13 @@ export const DashboardProvider = ({ children }) => {
 			console.log("🗑️ Member removed event received:", data);
 			if (activeDashboard && data.dashboardId === activeDashboard._id) {
 				console.log("✅ Removing member from active dashboard");
-				// Remove from members list
+				// Remove from members list - using email as primary identifier
 				setMembers((prev) =>
 					prev.filter(
 						(member) =>
-							member._id !== data.memberId && member.uid !== data.memberId
+							member.email !== data.memberEmail &&
+							member._id !== data.memberId &&
+							member.uid !== data.memberId
 					)
 				);
 
@@ -558,7 +698,9 @@ export const DashboardProvider = ({ children }) => {
 					...prev,
 					members: prev.members.filter(
 						(member) =>
-							member._id !== data.memberId && member.uid !== data.memberId
+							member.email !== data.memberEmail &&
+							member._id !== data.memberId &&
+							member.uid !== data.memberId
 					),
 				}));
 
@@ -570,7 +712,9 @@ export const DashboardProvider = ({ children }) => {
 								...dashboard,
 								members: dashboard.members.filter(
 									(member) =>
-										member._id !== data.memberId && member.uid !== data.memberId
+										member.email !== data.memberEmail &&
+										member._id !== data.memberId &&
+										member.uid !== data.memberId
 								),
 							};
 						}
@@ -638,6 +782,38 @@ export const DashboardProvider = ({ children }) => {
 			}
 		};
 
+		// Listen for dashboard deletion
+		const handleDashboardDeleted = (data) => {
+			console.log("🗑️ Dashboard deleted event received:", data);
+
+			// Remove from dashboards list
+			setDashboards((prev) => prev.filter((d) => d._id !== data.dashboardId));
+
+			// If the deleted dashboard was active, switch to first available or clear
+			if (activeDashboard && activeDashboard._id === data.dashboardId) {
+				console.log("📋 Active dashboard was deleted, switching...");
+				const remainingDashboards = dashboards.filter(
+					(d) => d._id !== data.dashboardId
+				);
+				if (remainingDashboards.length > 0) {
+					setActiveDashboard(remainingDashboards[0]);
+					setMembers(remainingDashboards[0].members || []);
+					fetchDashboardTasks(remainingDashboards[0]._id);
+				} else {
+					setActiveDashboard(null);
+					setMembers([]);
+					setDashboardTasks([]);
+				}
+			}
+
+			// Show notification (only if current user didn't delete it)
+			if (user?.email !== data.deletedBy) {
+				toast.info(
+					`Dashboard "${data.dashboardName}" was deleted by ${data.deletedBy}`
+				);
+			}
+		};
+
 		// console.log("📡 Registering socket event listeners");
 		socket.on("dashboard_task_created", handleDashboardTaskCreated);
 		socket.on("team_member_added", handleTeamMemberAdded);
@@ -647,6 +823,7 @@ export const DashboardProvider = ({ children }) => {
 		socket.on("dashboard_task_updated", handleDashboardTaskUpdated);
 		socket.on("task_moved", handleTaskMoved);
 		socket.on("dashboard_online_users", handleDashboardOnlineUsers);
+		socket.on("dashboard_deleted", handleDashboardDeleted);
 
 		return () => {
 			// console.log("📴 Unregistering socket event listeners");
@@ -658,6 +835,7 @@ export const DashboardProvider = ({ children }) => {
 			socket.off("dashboard_task_updated", handleDashboardTaskUpdated);
 			socket.off("task_moved", handleTaskMoved);
 			socket.off("dashboard_online_users", handleDashboardOnlineUsers);
+			socket.off("dashboard_deleted", handleDashboardDeleted);
 		};
 	}, [user, activeDashboard]);
 
@@ -674,9 +852,11 @@ export const DashboardProvider = ({ children }) => {
 			// console.log("🏠 Setting active dashboard:", activeDashboard.name);
 			// console.log("👥 Dashboard members from dashboard object:", activeDashboard.members);
 
-			// Always sync members from activeDashboard
-			setMembers(activeDashboard.members || []);
-			// console.log("✅ Members state updated with", activeDashboard.members?.length || 0, "members");
+			// Filter duplicates and sync members from activeDashboard
+			const uniqueMembers = filterUniqueMembers(activeDashboard.members || []);
+
+			setMembers(uniqueMembers);
+			// console.log("✅ Members state updated with", uniqueMembers?.length || 0, "unique members");
 
 			// Prepare user info for socket
 			const userInfo = {
@@ -704,7 +884,25 @@ export const DashboardProvider = ({ children }) => {
 	useEffect(() => {
 		if (activeDashboard?.members) {
 			// console.log("🔄 Dashboard members updated, syncing state:", activeDashboard.members);
-			setMembers(activeDashboard.members);
+
+			// Filter out duplicate members based on email (case-insensitive)
+			const uniqueMembers = filterUniqueMembers(activeDashboard.members);
+
+			// If duplicates were found, log them for debugging
+			if (uniqueMembers.length !== activeDashboard.members.length) {
+				console.log("🚨 Duplicate members found and filtered:", {
+					original: activeDashboard.members.length,
+					filtered: uniqueMembers.length,
+					duplicates: activeDashboard.members.filter(
+						(member, index, arr) =>
+							arr.findIndex(
+								(m) => m.email.toLowerCase() === member.email.toLowerCase()
+							) !== index
+					),
+				});
+			}
+
+			setMembers(uniqueMembers);
 		}
 	}, [activeDashboard?.members]);
 
@@ -717,6 +915,7 @@ export const DashboardProvider = ({ children }) => {
 		loading,
 		error,
 		createDashboard,
+		deleteDashboard,
 		inviteUser,
 		createDashboardTask,
 		switchDashboard,

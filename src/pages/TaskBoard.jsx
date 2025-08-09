@@ -39,6 +39,7 @@ import {
 	Menu,
 	UserRound,
 	User,
+	Trash2,
 } from "lucide-react";
 import { useTaskContext } from "../context/TaskContext";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,7 +58,7 @@ import {
 	endOfMonth,
 	formatDistanceToNow,
 } from "date-fns";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import useAxiosPublic from "../hooks/useAxiosPublic";
 import TeamManagementModal from "../components/TeamManagementModal";
 
@@ -66,6 +67,7 @@ const categories = ["To-Do", "In Progress", "Done"];
 const TaskBoard = () => {
 	const { id: dashboardId } = useParams();
 	const { user } = useAuth();
+	const navigate = useNavigate();
 	const {
 		dashboards,
 		activeDashboard,
@@ -75,6 +77,7 @@ const TaskBoard = () => {
 		updateDashboardName,
 		updateMemberRole,
 		removeMember,
+		deleteDashboard,
 		fetchDashboardTasks,
 		setDashboardTasks,
 		loading: contextLoading,
@@ -543,14 +546,15 @@ const TaskBoard = () => {
 					{ ...taskData, category: formCategory }
 				);
 
-				if (res.data) {
-					// Immediate local update
-					const newTask = res.data;
-					setDashboardTasks((prevTasks) => {
-						const updatedTasks = [...prevTasks, newTask];
-						return updatedTasks;
-					});
-				}
+				// Don't manually add to state - let socket event handle it to prevent duplicates
+				// if (res.data) {
+				// 	const newTask = res.data;
+				// 	setDashboardTasks((prevTasks) => {
+				// 		const updatedTasks = [...prevTasks, newTask];
+				// 		return updatedTasks;
+				// 	});
+				// }
+
 				addActivity(`New task "${taskData.title}" created in ${formCategory}`);
 				toast.success(`Task "${taskData.title}" created successfully`);
 			}

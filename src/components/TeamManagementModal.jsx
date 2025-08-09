@@ -136,14 +136,14 @@ const TeamManagementModal = ({
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-			<div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+			<div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-auto my-8 max-h-[90vh] overflow-hidden">
 				{/* Header */}
-				<div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-					<div className="flex items-center gap-3">
-						<h2 className="text-xl font-semibold">Team Management</h2>
+				<div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+					<div className="flex items-center gap-3 min-w-0">
+						<h2 className="text-xl font-semibold truncate">Team Management</h2>
 						{isCurrentUserAdmin && (
-							<span className="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-full flex items-center">
+							<span className="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-full flex items-center flex-shrink-0">
 								<Shield className="h-3 w-3 mr-1" />
 								Admin
 							</span>
@@ -151,17 +151,17 @@ const TeamManagementModal = ({
 					</div>
 					<button
 						onClick={onClose}
-						className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+						className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
 					>
 						<X className="h-5 w-5" />
 					</button>
 				</div>
 
 				{/* Tabs */}
-				<div className="border-b border-gray-200 dark:border-gray-700">
-					<div className="flex">
+				<div className="border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+					<div className="flex overflow-x-auto">
 						<button
-							className={`px-4 py-2 ${
+							className={`px-4 py-2 whitespace-nowrap ${
 								activeTab === "members"
 									? "border-b-2 border-indigo-500 text-indigo-600"
 									: "text-gray-500 hover:text-gray-700"
@@ -175,7 +175,7 @@ const TeamManagementModal = ({
 						</button>
 						{isCurrentUserAdmin && (
 							<button
-								className={`px-4 py-2 ${
+								className={`px-4 py-2 whitespace-nowrap ${
 									activeTab === "invite"
 										? "border-b-2 border-indigo-500 text-indigo-600"
 										: "text-gray-500 hover:text-gray-700"
@@ -191,7 +191,10 @@ const TeamManagementModal = ({
 					</div>
 				</div>
 
-				<div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+				<div
+					className="overflow-y-auto flex-1"
+					style={{ maxHeight: "calc(90vh - 120px)" }}
+				>
 					{/* Team Members Tab */}
 					{activeTab === "members" && (
 						<div className="p-4">
@@ -402,133 +405,137 @@ const TeamManagementModal = ({
 
 			{/* Confirmation Dialog */}
 			{showConfirmDialog && selectedMember && (
-				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-					<div className="bg-white dark:bg-gray-800 p-5 rounded-lg w-96">
-						<h3 className="text-lg font-medium mb-3">
-							{confirmAction === "promoteToAdmin" && "Promote to Admin?"}
-							{confirmAction === "demoteFromAdmin" && "Remove Admin Role?"}
-							{confirmAction === "removeMember" && "Remove Team Member?"}
-						</h3>
+				<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+					<div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-auto my-8 relative">
+						<div className="p-5">
+							<h3 className="text-lg font-medium mb-3 pr-8">
+								{confirmAction === "promoteToAdmin" && "Promote to Admin?"}
+								{confirmAction === "demoteFromAdmin" && "Remove Admin Role?"}
+								{confirmAction === "removeMember" && "Remove Team Member?"}
+							</h3>
 
-						<div className="mb-4 flex items-center gap-3">
-							{selectedMember.photoURL ? (
-								<img
-									src={selectedMember.photoURL}
-									alt={selectedMember.name || selectedMember.email}
-									className="w-10 h-10 rounded-full"
-								/>
-							) : (
-								<div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white">
-									{(selectedMember.name || selectedMember.email || "A")
-										.charAt(0)
-										.toUpperCase()}
+							<div className="mb-4 flex items-center gap-3">
+								{selectedMember.photoURL ? (
+									<img
+										src={selectedMember.photoURL}
+										alt={selectedMember.name || selectedMember.email}
+										className="w-10 h-10 rounded-full flex-shrink-0"
+									/>
+								) : (
+									<div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white flex-shrink-0">
+										{(selectedMember.name || selectedMember.email || "A")
+											.charAt(0)
+											.toUpperCase()}
+									</div>
+								)}
+								<div className="min-w-0 flex-1">
+									<p className="font-medium truncate">
+										{selectedMember.name || selectedMember.email}
+									</p>
+									<p className="text-sm text-gray-500 truncate">
+										{selectedMember.email}
+									</p>
+								</div>
+							</div>
+
+							{confirmAction === "promoteToAdmin" && (
+								<div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/30 rounded-md flex items-start">
+									<AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2 flex-shrink-0" />
+									<div className="text-sm text-yellow-800 dark:text-yellow-300 min-w-0">
+										<p className="font-medium mb-1">
+											You are about to grant admin privileges to this member.
+										</p>
+										<p>Admins can:</p>
+										<ul className="list-disc pl-5 mt-1 space-y-0.5">
+											<li>Change member roles</li>
+											<li>Remove members from the dashboard</li>
+											<li>Manage dashboard settings</li>
+										</ul>
+									</div>
 								</div>
 							)}
-							<div>
-								<p className="font-medium">
-									{selectedMember.name || selectedMember.email}
-								</p>
-								<p className="text-sm text-gray-500">{selectedMember.email}</p>
-							</div>
-						</div>
 
-						{confirmAction === "promoteToAdmin" && (
-							<div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/30 rounded-md flex items-start">
-								<AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2 flex-shrink-0" />
-								<div className="text-sm text-yellow-800 dark:text-yellow-300">
-									<p className="font-medium mb-1">
-										You are about to grant admin privileges to this member.
-									</p>
-									<p>Admins can:</p>
-									<ul className="list-disc pl-5 mt-1 space-y-0.5">
-										<li>Change member roles</li>
-										<li>Remove members from the dashboard</li>
-										<li>Manage dashboard settings</li>
-									</ul>
+							{confirmAction === "demoteFromAdmin" && (
+								<div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/30 rounded-md flex items-start">
+									<AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2 flex-shrink-0" />
+									<div className="text-sm text-yellow-800 dark:text-yellow-300 min-w-0">
+										<p className="font-medium mb-1">
+											You are about to remove admin privileges from this member.
+										</p>
+										<p>After this change, they will no longer be able to:</p>
+										<ul className="list-disc pl-5 mt-1 space-y-0.5">
+											<li>Change member roles</li>
+											<li>Remove members from the dashboard</li>
+											<li>Manage dashboard settings</li>
+										</ul>
+									</div>
 								</div>
-							</div>
-						)}
+							)}
 
-						{confirmAction === "demoteFromAdmin" && (
-							<div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/30 rounded-md flex items-start">
-								<AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2 flex-shrink-0" />
-								<div className="text-sm text-yellow-800 dark:text-yellow-300">
-									<p className="font-medium mb-1">
-										You are about to remove admin privileges from this member.
-									</p>
-									<p>After this change, they will no longer be able to:</p>
-									<ul className="list-disc pl-5 mt-1 space-y-0.5">
-										<li>Change member roles</li>
-										<li>Remove members from the dashboard</li>
-										<li>Manage dashboard settings</li>
-									</ul>
+							{confirmAction === "removeMember" && (
+								<div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-md flex items-start">
+									<AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+									<div className="text-sm text-red-800 dark:text-red-300 min-w-0">
+										<p className="font-medium mb-1">
+											You are about to remove this member from the team.
+										</p>
+										<p>This action will:</p>
+										<ul className="list-disc pl-5 mt-1 space-y-0.5">
+											<li>Remove their access to this dashboard</li>
+											<li>Prevent them from viewing or editing any tasks</li>
+											<li>Remove them from all assigned tasks</li>
+										</ul>
+										<p className="mt-2 font-medium">
+											This action cannot be undone.
+										</p>
+									</div>
 								</div>
-							</div>
-						)}
+							)}
 
-						{confirmAction === "removeMember" && (
-							<div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-md flex items-start">
-								<AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-								<div className="text-sm text-red-800 dark:text-red-300">
-									<p className="font-medium mb-1">
-										You are about to remove this member from the team.
-									</p>
-									<p>This action will:</p>
-									<ul className="list-disc pl-5 mt-1 space-y-0.5">
-										<li>Remove their access to this dashboard</li>
-										<li>Prevent them from viewing or editing any tasks</li>
-										<li>Remove them from all assigned tasks</li>
-									</ul>
-									<p className="mt-2 font-medium">
-										This action cannot be undone.
-									</p>
-								</div>
+							<div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+								<button
+									onClick={() => setShowConfirmDialog(false)}
+									className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 order-2 sm:order-1"
+								>
+									Cancel
+								</button>
+								<button
+									onClick={confirmActionHandler}
+									disabled={loading}
+									className={`px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 order-1 sm:order-2 ${
+										confirmAction === "removeMember"
+											? "bg-red-600 hover:bg-red-700"
+											: confirmAction === "promoteToAdmin"
+											? "bg-purple-600 hover:bg-purple-700"
+											: "bg-blue-600 hover:bg-blue-700"
+									}`}
+								>
+									{loading ? (
+										<div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+									) : (
+										<>
+											{confirmAction === "promoteToAdmin" && (
+												<>
+													<Shield className="h-4 w-4" />
+													<span>Make Admin</span>
+												</>
+											)}
+											{confirmAction === "demoteFromAdmin" && (
+												<>
+													<User className="h-4 w-4" />
+													<span>Remove Admin</span>
+												</>
+											)}
+											{confirmAction === "removeMember" && (
+												<>
+													<UserMinus className="h-4 w-4" />
+													<span>Remove Member</span>
+												</>
+											)}
+										</>
+									)}
+								</button>
 							</div>
-						)}
-
-						<div className="flex justify-between">
-							<button
-								onClick={() => setShowConfirmDialog(false)}
-								className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
-							>
-								Cancel
-							</button>
-							<button
-								onClick={confirmActionHandler}
-								disabled={loading}
-								className={`px-4 py-2 text-white rounded-md ${
-									confirmAction === "removeMember"
-										? "bg-red-600 hover:bg-red-700"
-										: confirmAction === "promoteToAdmin"
-										? "bg-purple-600 hover:bg-purple-700"
-										: "bg-blue-600 hover:bg-blue-700"
-								}`}
-							>
-								{loading ? (
-									<div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-								) : (
-									<>
-										{confirmAction === "promoteToAdmin" && (
-											<>
-												<Shield className="h-4 w-4 mr-2 inline" />
-												Make Admin
-											</>
-										)}
-										{confirmAction === "demoteFromAdmin" && (
-											<>
-												<User className="h-4 w-4 mr-2 inline" />
-												Remove Admin
-											</>
-										)}
-										{confirmAction === "removeMember" && (
-											<>
-												<UserMinus className="h-4 w-4 mr-2 inline" />
-												Remove Member
-											</>
-										)}
-									</>
-								)}
-							</button>
 						</div>
 					</div>
 				</div>

@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import DashboardForm from "../components/DashboardForm";
 import TeamInviteForm from "../components/TeamInviteForm";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import BoardCard from "../components/boards/BoardCard";
 
 const API_BASE_URL = "http://localhost:5000";
 
@@ -244,9 +245,9 @@ const Dashboard = () => {
 	}
 
 	// Helper to handle dashboard selection and navigation
-	const handleDashboardSelect = (dashboardId) => {
-		switchDashboard(dashboardId);
-		navigate(`/dashboard/taskboard/${dashboardId}`);
+	const handleDashboardSelect = (dashboard) => {
+		switchDashboard(dashboard);
+		navigate(`/dashboard/taskboard/${dashboard._id}`);
 	};
 
 	return (
@@ -318,7 +319,7 @@ const Dashboard = () => {
 									New Dashboard
 								</Button>
 							</DialogTrigger>
-							<DialogContent className="sm:max-w-[550px]">
+							<DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-0">
 								<DashboardForm
 									onSuccess={() => console.log("Dashboard created")}
 								/>
@@ -327,65 +328,14 @@ const Dashboard = () => {
 					</div>
 
 					{dashboards.length > 0 ? (
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
 							{dashboards.map((dashboard) => (
-								<div
+								<BoardCard
 									key={dashboard._id}
-									onClick={() => handleDashboardSelect(dashboard._id)}
-									className={`cursor-pointer p-5 rounded-lg border transition-all transform hover:scale-105 ${
-										activeDashboard?._id === dashboard._id
-											? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 shadow-lg ring-2 ring-indigo-200 dark:ring-indigo-800"
-											: "border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md"
-									}`}
-								>
-									<div className="flex justify-between items-start">
-										<h3 className="font-semibold text-lg">{dashboard.name}</h3>
-										{activeDashboard?._id === dashboard._id && (
-											<span className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs px-2 py-1 rounded-full">
-												Active
-											</span>
-										)}
-									</div>
-									{dashboard.description && (
-										<p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-											{dashboard.description}
-										</p>
-									)}
-									<div className="flex items-center mt-3 text-xs text-gray-500">
-										<span className="flex items-center">
-											<Users size={14} className="mr-1" />
-											{dashboard.members?.length || 1}{" "}
-											{dashboard.members?.length === 1 ? "member" : "members"}
-										</span>
-										<span className="mx-2">•</span>
-										<span>
-											Created by{" "}
-											{dashboard.createdBy?.name ||
-												dashboard.createdBy?.email ||
-												"you"}
-										</span>
-									</div>
-									<div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
-										<span className="text-xs text-gray-500">
-											{dashboard.tasks?.length || 0} tasks
-										</span>
-										<button
-											onClick={(e) => {
-												e.stopPropagation();
-												handleDashboardSelect(dashboard._id);
-											}}
-											className={`text-xs px-3 py-1 rounded ${
-												activeDashboard?._id === dashboard._id
-													? "bg-indigo-500 text-white"
-													: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50"
-											}`}
-										>
-											{activeDashboard?._id === dashboard._id
-												? "Current"
-												: "Select"}
-										</button>
-									</div>
-								</div>
+									dashboard={dashboard}
+									isActive={activeDashboard?._id === dashboard._id}
+									onSelect={handleDashboardSelect}
+								/>
 							))}
 						</div>
 					) : (
@@ -402,7 +352,7 @@ const Dashboard = () => {
 										Create Dashboard
 									</Button>
 								</DialogTrigger>
-								<DialogContent className="sm:max-w-[550px]">
+								<DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-0">
 									<DashboardForm
 										onSuccess={() => console.log("Dashboard created")}
 									/>
@@ -410,8 +360,6 @@ const Dashboard = () => {
 							</Dialog>
 						</div>
 					)}
-
-				
 				</div>
 
 				{/* Dashboard Overview Header */}

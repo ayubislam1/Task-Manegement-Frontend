@@ -77,7 +77,7 @@ const Team = () => {
 								New Dashboard
 							</Button>
 						</DialogTrigger>
-						<DialogContent className="sm:max-w-[550px]">
+						<DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-0">
 							<DashboardForm
 								onSuccess={() =>
 									toast.success("Dashboard created successfully")
@@ -93,7 +93,7 @@ const Team = () => {
 						{dashboards.map((dashboard) => (
 							<Card
 								key={dashboard._id}
-								onClick={() => switchDashboard(dashboard._id)}
+								onClick={() => switchDashboard(dashboard)}
 								className={`cursor-pointer p-4 hover:shadow-md transition-all ${
 									activeDashboard?._id === dashboard._id
 										? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 shadow-md"
@@ -139,7 +139,7 @@ const Team = () => {
 									Create Your First Dashboard
 								</Button>
 							</DialogTrigger>
-							<DialogContent className="sm:max-w-[550px]">
+							<DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto p-0">
 								<DashboardForm
 									onSuccess={() =>
 										toast.success("Dashboard created successfully")

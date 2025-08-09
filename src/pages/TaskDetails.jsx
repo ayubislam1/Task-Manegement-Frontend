@@ -23,6 +23,8 @@ import {
 	Link,
 	Unlink2,
 	Users,
+	AlertTriangle,
+	X,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -67,13 +69,8 @@ const TaskDetails = () => {
 	const [task, setTask] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
-	const {
-		tasks,
-		updateTaskStatus,
-		deleteTask,
-		addTaskDependency,
-		removeTaskDependency,
-	} = useTask();
+	const { tasks, updateTaskStatus, addTaskDependency, removeTaskDependency } =
+		useTask();
 	const { user } = useAuth();
 	const [activeUsers, setActiveUsers] = useState([]);
 	const [isTaskOwner, setIsTaskOwner] = useState(false);
@@ -208,23 +205,8 @@ const TaskDetails = () => {
 		}
 	};
 
-	const handleDeleteTask = async () => {
-		if (!window.confirm("Are you sure you want to delete this task?")) return;
-
-		try {
-			setLoading(true);
-			await deleteTask(task._id);
-			toast.success("Task deleted successfully");
-			navigate("/dashboard/taskboard");
-		} catch (error) {
-			console.error("Error deleting task:", error);
-			toast.error("Failed to delete task");
-			setLoading(false);
-		}
-	};
-
 	const handleEditTask = () => {
-		navigate(`/dashboard/edit-task/${id}`);
+		navigate(`/dashboard/task-edit/${id}`);
 	};
 
 	const handleAddDependency = async (dependencyId) => {
@@ -317,16 +299,6 @@ const TaskDetails = () => {
 							<Button variant="outline" size="sm" onClick={handleEditTask}>
 								<Edit className="w-4 h-4 mr-1" /> Edit
 							</Button>
-							{isTaskOwner && (
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={handleDeleteTask}
-									className="text-red-500 hover:text-red-700 hover:bg-red-50"
-								>
-									<Trash2 className="w-4 h-4 mr-1" /> Delete
-								</Button>
-							)}
 						</div>
 					)}
 				</div>

@@ -47,13 +47,13 @@ const TeamManagement = () => {
 
 	const handleRoleChange = async (memberId, newRole) => {
 		if (!isCurrentUserAdmin) {
-			toast.error("শুধুমাত্র অ্যাডমিনরা সদস্যদের ভূমিকা পরিবর্তন করতে পারেন");
+			toast.error("Only admins can change member roles");
 			return;
 		}
 
 		const member = members.find((m) => (m.uid || m._id) === memberId);
 		if (member?.email === user?.email) {
-			toast.error("আপনি নিজের ভূমিকা পরিবর্তন করতে পারবেন না");
+			toast.error("You cannot change your own role");
 			return;
 		}
 
@@ -77,12 +77,12 @@ const TeamManagement = () => {
 					toast.success(
 						`${
 							member?.name || member?.email
-						} এর ভূমিকা ${newRole} এ পরিবর্তন করা হয়েছে`
+						}'s role has been changed to ${newRole}`
 					);
 				}
 			} catch (error) {
 				console.error("Error updating role:", error);
-				toast.error("ভূমিকা পরিবর্তন করতে ব্যর্থ হয়েছে");
+				toast.error("Failed to update member role");
 			} finally {
 				setChangingRole(false);
 				setProcessingMemberId(null);
@@ -92,19 +92,30 @@ const TeamManagement = () => {
 
 	const handleRemoveMember = async (memberId) => {
 		if (!isCurrentUserAdmin) {
-			toast.error("শুধুমাত্র অ্যাডমিনরা সদস্যদের সরাতে পারেন");
+			toast.error("Only admins can remove members");
 			return;
 		}
 
 		const member = members.find((m) => (m.uid || m._id) === memberId);
 		if (member?.email === user?.email) {
-			toast.error("আপনি নিজেকে ড্যাশবোর্ড থেকে সরাতে পারবেন না");
+			toast.error("You cannot remove yourself from the dashboard");
 			return;
+		}
+
+		// Prevent removing the last admin
+		if (member?.role === "Admin") {
+			const adminCount = members.filter((m) => m.role === "Admin").length;
+			if (adminCount <= 1) {
+				toast.error(
+					"Cannot remove the last admin. At least one admin must remain."
+				);
+				return;
+			}
 		}
 
 		if (
 			window.confirm(
-				`আপনি কি নিশ্চিত যে ${member?.name || member?.email} কে সরাতে চান?`
+				`Are you sure you want to remove ${member?.name || member?.email}?`
 			)
 		) {
 			setProcessingMemberId(memberId);
@@ -113,12 +124,12 @@ const TeamManagement = () => {
 				const success = await removeMember(activeDashboard._id, memberId);
 				if (success) {
 					toast.success(
-						`${member?.name || member?.email} কে সফলভাবে সরানো হয়েছে`
+						`${member?.name || member?.email} has been successfully removed`
 					);
 				}
 			} catch (error) {
 				console.error("Error removing member:", error);
-				toast.error("সদস্য সরাতে ব্যর্থ হয়েছে");
+				toast.error("Failed to remove member");
 			} finally {
 				setProcessingMemberId(null);
 			}
@@ -193,7 +204,7 @@ const TeamManagement = () => {
 	}
 
 	if (!activeDashboard) {
-		return <p>কোন ড্যাশবোর্ড নির্বাচিত নেই</p>;
+		return <p>No dashboard selected</p>;
 	}
 
 	const adminCount = members.filter((m) => m.role === "Admin").length;
@@ -339,18 +350,23 @@ const TeamManagement = () => {
 									)}
 								</div>
 
-								{/* Remove button - only show for admins when they can modify the member */}
-								{canModifyMember && (
-									<Button
-										variant="ghost"
-										size="sm"
-										onClick={() => handleRemoveMember(member.uid || member._id)}
-										disabled={processingMemberId === (member.uid || member._id)}
-										className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-8 w-8 p-0"
-									>
-										<UserMinus className="h-4 w-4" />
-									</Button>
-								)}
+								{/* Remove button - only show for admins when they can modify the member and it's not the last admin */}
+								{canModifyMember &&
+									!(member.role === "Admin" && adminCount <= 1) && (
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() =>
+												handleRemoveMember(member.uid || member._id)
+											}
+											disabled={
+												processingMemberId === (member.uid || member._id)
+											}
+											className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 h-8 w-8 p-0"
+										>
+											<UserMinus className="h-4 w-4" />
+										</Button>
+									)}
 							</div>
 						</div>
 					);
@@ -360,9 +376,9 @@ const TeamManagement = () => {
 			{isCurrentUserAdmin && (
 				<div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
 					<div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-						<p>• অ্যাডমিনরা সদস্যদের ভূমিকা পরিবর্তন এবং সরাতে পারেন</p>
-						<p>• আপনি নিজের ভূমিকা পরিবর্তন বা নিজেকে সরাতে পারবেন না</p>
-						<p>• ড্যাশবোর্ডে অন্তত একজন অ্যাডমিন থাকতে হবে</p>
+						<p>• Admins can change member roles and remove members</p>
+						<p>• You cannot change your own role or remove yourself</p>
+						<p>• At least one admin must remain in the dashboard</p>
 					</div>
 				</div>
 			)}

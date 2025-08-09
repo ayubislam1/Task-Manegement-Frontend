@@ -100,7 +100,7 @@ const TaskBoard = () => {
 				setDashboardInfo(currentDashboard);
 				setBoardName(currentDashboard.name);
 				if (!activeDashboard || activeDashboard._id !== dashboardId) {
-					switchDashboard(dashboardId);
+					switchDashboard(currentDashboard);
 				}
 			}
 		}
